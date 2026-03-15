@@ -1,0 +1,14 @@
+/Users/castleamakit/book-quote-card/src-tauri/target/debug/deps/libserde-a397574afeeeea4b.rmeta: /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/castleamakit/book-quote-card/src-tauri/target/debug/build/serde-ac6a53c55ec88ed1/out/private.rs
+
+/Users/castleamakit/book-quote-card/src-tauri/target/debug/deps/libserde-a397574afeeeea4b.rlib: /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/castleamakit/book-quote-card/src-tauri/target/debug/build/serde-ac6a53c55ec88ed1/out/private.rs
+
+/Users/castleamakit/book-quote-card/src-tauri/target/debug/deps/serde-a397574afeeeea4b.d: /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/castleamakit/book-quote-card/src-tauri/target/debug/build/serde-ac6a53c55ec88ed1/out/private.rs
+
+/Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/Users/castleamakit/book-quote-card/src-tauri/target/debug/build/serde-ac6a53c55ec88ed1/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/castleamakit/book-quote-card/src-tauri/target/debug/build/serde-ac6a53c55ec88ed1/out
