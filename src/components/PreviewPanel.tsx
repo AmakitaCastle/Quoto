@@ -1,25 +1,54 @@
+/**
+ * 预览面板组件
+ *
+ * 显示书摘卡片的实时预览，提供方向选择、保存和复制功能。
+ * 用户可以在右侧面板看到卡片的即时渲染效果。
+ *
+ * @package src/components
+ */
+
 import { useRef } from 'react';
 import { CardData } from '@/types';
 import { CardCanvas } from './CardCanvas';
 import { copyCanvasToClipboard, downloadCanvas } from './PreviewPanel.actions';
 import { Button } from '@/components/ui/button';
 
+/** 预览面板组件的属性 */
 interface PreviewPanelProps {
+  /** 当前卡片数据 */
   data: CardData;
+
+  /** 数据变化回调 */
   onDataChange: (data: Partial<CardData>) => void;
 }
 
+/**
+ * 预览面板组件
+ *
+ * 位于应用右侧，提供以下功能：
+ * - 卡片预览：使用 CardCanvas 实时渲染
+ * - 方向切换：竖屏/横屏/自动
+ * - 保存到本地：下载 PNG 图片
+ * - 复制图片：复制到剪贴板
+ *
+ * 空状态处理：当用户未输入书摘时，显示占位提示。
+ *
+ * @param props - 组件属性
+ */
 export function PreviewPanel({ data, onDataChange }: PreviewPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  /** 保存卡片到本地 */
   const handleSave = async () => {
     const canvas = containerRef.current?.querySelector('canvas');
     if (!canvas) return;
+    // 文件名中使用书名和前 10 个字符的书摘
     const sanitize = (s: string) => s.replace(/[<>:"/\\|？*]/g, '_');
     const filename = `${sanitize(data.bookTitle)}_${sanitize(data.quote.slice(0, 10))}.png`;
     await downloadCanvas(canvas, filename);
   };
 
+  /** 复制卡片到剪贴板 */
   const handleCopy = async () => {
     const canvas = containerRef.current?.querySelector('canvas');
     if (!canvas) return;
@@ -73,16 +102,18 @@ export function PreviewPanel({ data, onDataChange }: PreviewPanelProps) {
       <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
         <div ref={containerRef}>
           {(() => {
-  const hasContent = data.quote.trim() || data.bookTitle.trim();
+            // 检查是否有内容：书摘或书名任一不为空则显示卡片
+            const hasContent = data.quote.trim() || data.bookTitle.trim();
 
-  if (hasContent) {
-    return <CardCanvas data={data} />;
-  }
+            if (hasContent) {
+              return <CardCanvas data={data} />;
+            }
 
-  return (
-    <div className="text-gray-600 text-sm">输入书摘句子后，预览将显示在这里</div>
-  );
-})()}
+            // 空状态：显示占位提示
+            return (
+              <div className="text-gray-600 text-sm">输入书摘句子后，预览将显示在这里</div>
+            );
+          })()}
         </div>
       </div>
 

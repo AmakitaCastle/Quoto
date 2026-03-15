@@ -1,7 +1,20 @@
+/**
+ * Input 输入框组件
+ *
+ * 基于 shadcn/ui 的 Input 组件。
+ * 提供统一的样式和可访问性支持。
+ *
+ * @package src/components/ui
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Input 组件的 props 类型
+ * 继承原生 input 元素的所有属性
+ */
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
     return (

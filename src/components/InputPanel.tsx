@@ -1,15 +1,42 @@
+/**
+ * 输入面板组件
+ *
+ * 提供用户输入书摘信息的表单界面。
+ * 包含句子、书名、作者三个输入字段，以及填充示例和保存按钮。
+ *
+ * @package src/components
+ */
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CardData } from '@/types';
 import { SAMPLE_QUOTES } from '@/data/sampleQuotes';
 
+/** 输入面板组件的属性 */
 interface InputPanelProps {
+  /** 当前卡片数据 */
   data: CardData;
+
+  /** 数据变化回调，接收部分更新 */
   onDataChange: (data: Partial<CardData>) => void;
+
+  /** 保存按钮点击回调 */
   onSave: () => void;
 }
 
+/**
+ * 输入面板组件
+ *
+ * 位于应用左侧的输入区域，用户可以：
+ * - 输入或粘贴书摘句子
+ * - 输入书名和作者
+ * - 点击"填充示例"快速填入预设内容
+ * - 点击"保存卡片"生成并下载图片
+ *
+ * @param props - 组件属性
+ */
 export function InputPanel({ data, onDataChange, onSave }: InputPanelProps) {
+  /** 填充示例数据 */
   const handleFillSample = () => {
     const randomQuote = SAMPLE_QUOTES[Math.floor(Math.random() * SAMPLE_QUOTES.length)];
     onDataChange(randomQuote);
@@ -60,6 +87,7 @@ export function InputPanel({ data, onDataChange, onSave }: InputPanelProps) {
         />
       </div>
 
+      {/* 保存按钮 */}
       <div className="mt-auto flex-shrink-0">
         <Button
           className="w-full bg-gold hover:bg-gold-hover text-black font-semibold"
