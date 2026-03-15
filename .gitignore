@@ -25,5 +25,6 @@ yarn-error.log*
 
 # Rust
 /target
+/src-tauri/target/
 /Cargo.lock
 /gen/
