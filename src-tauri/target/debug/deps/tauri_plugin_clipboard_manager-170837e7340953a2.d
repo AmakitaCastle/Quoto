@@ -1,8 +1,0 @@
-/Users/castleamakit/book-quote-card/src-tauri/target/debug/deps/libtauri_plugin_clipboard_manager-170837e7340953a2.rmeta: /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/lib.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/desktop.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/commands.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/error.rs
-
-/Users/castleamakit/book-quote-card/src-tauri/target/debug/deps/tauri_plugin_clipboard_manager-170837e7340953a2.d: /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/lib.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/desktop.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/commands.rs /Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/error.rs
-
-/Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/lib.rs:
-/Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/desktop.rs:
-/Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/commands.rs:
-/Users/castleamakit/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-clipboard-manager-2.3.2/src/error.rs:
