@@ -1,0 +1,94 @@
+{
+  "styles": [
+    {
+      "id": "dark-gold",
+      "name": "暗金",
+      "background": "linear-gradient(135deg, #1a1510 0%, #0d0d0d 100%)",
+      "border": "#2a2520",
+      "accentColor": "#d0b87c",
+      "textColor": "#d0b87c",
+      "quoteColor": "#d0b87c"
+    },
+    {
+      "id": "parchment",
+      "name": "羊皮纸",
+      "background": "linear-gradient(135deg, #f5f0e6 0%, #e8e0d0 100%)",
+      "border": "#d4c9b8",
+      "accentColor": "#2a1810",
+      "textColor": "#0b0800",
+      "quoteColor": "#0b0800"
+    },
+    {
+      "id": "ink-green",
+      "name": "墨绿",
+      "background": "linear-gradient(135deg, #1a2f2a 0%, #0d1a16 100%)",
+      "border": "#2a3f3a",
+      "accentColor": "#81c1a1",
+      "textColor": "#81c1a1",
+      "quoteColor": "#81c1a1"
+    },
+    {
+      "id": "pure-black",
+      "name": "纯黑",
+      "background": "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)",
+      "border": "#2a2a2a",
+      "accentColor": "#c1c1c1",
+      "textColor": "#c1c1c1",
+      "quoteColor": "#c1c1c1"
+    },
+    {
+      "id": "ink-wash",
+      "name": "水墨",
+      "background": "linear-gradient(135deg, #f7f4ef 0%, #ede9e2 100%)",
+      "border": "#d8d4cc",
+      "accentColor": "#1e1408",
+      "textColor": "#1e1408",
+      "quoteColor": "rgba(20,15,8,0.45)"
+    },
+    {
+      "id": "xuan-paper",
+      "name": "宣纸",
+      "background": "linear-gradient(135deg, #f0e8d8 0%, #e4d8c4 100%)",
+      "border": "#ccc0a8",
+      "accentColor": "#a05014",
+      "textColor": "#2a1808",
+      "quoteColor": "#a05014"
+    },
+    {
+      "id": "night-ink",
+      "name": "夜墨",
+      "background": "linear-gradient(135deg, #0e0e14 0%, #080810 100%)",
+      "border": "#1e1e2a",
+      "accentColor": "#8c78dc",
+      "textColor": "#c8c4e0",
+      "quoteColor": "#8c78dc"
+    },
+    {
+      "id": "deep-autumn",
+      "name": "深秋",
+      "background": "linear-gradient(135deg, #1c1208 0%, #100a04 100%)",
+      "border": "#2c1e10",
+      "accentColor": "#c87828",
+      "textColor": "#e0c89a",
+      "quoteColor": "#c87828"
+    },
+    {
+      "id": "first-snow",
+      "name": "初雪",
+      "background": "linear-gradient(135deg, #f8f8fc 0%, #eeeef6 100%)",
+      "border": "#d8d8e8",
+      "accentColor": "#6478b4",
+      "textColor": "#1a1e2e",
+      "quoteColor": "rgba(100,120,180,0.55)"
+    },
+    {
+      "id": "spring-day",
+      "name": "春日",
+      "background": "linear-gradient(135deg, #f4f8ee 0%, #e8f0e0 100%)",
+      "border": "#c8d8b8",
+      "accentColor": "#4a8c3c",
+      "textColor": "#1a2414",
+      "quoteColor": "rgba(74,140,60,0.6)"
+    }
+  ]
+}

@@ -58,7 +58,10 @@ ziju/
 │   │   ├── cardRenderer.ts         # 卡片渲染逻辑
 │   │   └── cardSizeCalculator.ts   # 尺寸计算
 │   ├── types/              # TypeScript 类型
-│   └── data/               # 示例数据
+│   ├── data/               # 数据文件
+│   │   ├── styles.json         # 风格配置（只需编辑此文件）
+│   │   └── sampleQuotes.ts     # 示例书摘数据
+│   └── lib/                # 基础库
 ├── src-tauri/              # Rust 后端
 │   ├── src/main.rs         # Tauri 入口
 │   └── Cargo.toml
@@ -67,19 +70,37 @@ ziju/
 
 ## 添加新风格
 
-编辑 `src/components/StylePicker.data.ts`，添加新的风格配置：
+编辑 `src/data/styles.json` 文件，在 `styles` 数组中添加新的风格配置：
 
-```typescript
+```json
 {
-  id: 'your-style-id',
-  name: '风格名称',
-  background: 'linear-gradient(...)',
-  border: '#xxxxxx',
-  accentColor: '#xxxxxx',
-  textColor: '#xxxxxx',
-  quoteColor: '#xxxxxx',
+  "styles": [
+    {
+      "id": "your-style-id",
+      "name": "风格名称",
+      "background": "linear-gradient(135deg, #start 0%, #end 100%)",
+      "border": "#xxxxxx",
+      "accentColor": "#xxxxxx",
+      "textColor": "#xxxxxx",
+      "quoteColor": "#xxxxxx"
+    }
+  ]
 }
 ```
+
+**保存即可生效**，无需重启开发服务器（Vite 会自动热更新）。
+
+### 配置字段说明
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `id` | 风格唯一标识（英文 + 短横线格式） | `dark-gold` |
+| `name` | 显示名称（中文） | `暗金` |
+| `background` | CSS 渐变背景 | `linear-gradient(135deg, #1a1510 0%, #0d0d0d 100%)` |
+| `border` | 边框颜色（预留） | `#2a2520` |
+| `accentColor` | 强调色（书名、作者、分隔线） | `#d0b87c` |
+| `textColor` | 正文颜色 | `#d0b87c` |
+| `quoteColor` | 引号颜色（可选） | `#d0b87c` |
 
 ## 颜色一致性
 
