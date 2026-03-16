@@ -230,11 +230,24 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
                     )}
                   </div>
 
-                  {/* 底部 */}
-                  <div className="p-4 border-t border-[#2a2a2a]">
+                  {/* 底部按钮 */}
+                  <div className="flex gap-2 p-4 border-t border-[#2a2a2a]">
+                    {/* 加载更多按钮 - 仅当还有更多字体时显示 */}
+                    {displayCount < filteredFonts.length && (
+                      <button
+                        className="flex-1 bg-gold hover:bg-gold-hover text-black text-sm font-medium py-2 rounded"
+                        onClick={handleLoadMore}
+                        type="button"
+                      >
+                        加载更多 5 个
+                      </button>
+                    )}
+
+                    {/* 取消按钮 */}
                     <button
-                      className="w-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-gray-100 text-sm py-2 rounded"
+                      className="flex-1 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-gray-100 text-sm py-2 rounded"
                       onClick={handleCloseModal}
+                      type="button"
                     >
                       取消
                     </button>
