@@ -7,7 +7,15 @@
  */
 
 import { useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import fontsData from '@/data/fonts.json';
+
+/** 系统字体信息 */
+interface SystemFont {
+  name: string;
+  family: string;
+  is_system: boolean;
+}
 
 /** FontPicker 组件的属性 */
 interface FontPickerProps {
@@ -26,6 +34,9 @@ interface FontPickerProps {
  */
 export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showSystemFonts, setShowSystemFonts] = useState(false);
+  const [systemFonts, setSystemFonts] = useState<SystemFont[]>([]);
+  const [loadingFonts, setLoadingFonts] = useState(false);
 
   // 根据类型获取字体列表
   const fontList = type === 'body' ? fontsData.bodyFonts : fontsData.handwritingFonts;
@@ -35,6 +46,19 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
   const selectedFontName = selectedFontConfig?.name || '自定义';
 
   const label = type === 'body' ? '正文字体' : '书名/作者字体';
+
+  // 加载系统字体
+  const handleLoadSystemFonts = async () => {
+    setLoadingFonts(true);
+    try {
+      const fonts = await invoke<SystemFont[]>('get_system_fonts');
+      setSystemFonts(fonts);
+    } catch (err) {
+      console.error('Failed to load system fonts:', err);
+    } finally {
+      setLoadingFonts(false);
+    }
+  };
 
   return (
     <div className="mb-4">
@@ -79,13 +103,72 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
             <div className="border-t border-[#2a2a2a] mt-1 pt-1">
               <button
                 className="w-full px-3 py-2 text-xs text-gray-400 text-left hover:bg-[#2a2a2a]"
-                onClick={() => {
-                  // 后续扩展：打开系统字体选择器
+                onClick={async () => {
+                  await handleLoadSystemFonts();
+                  setShowSystemFonts(true);
                 }}
               >
                 更多系统字体...
               </button>
             </div>
+
+            {/* 系统字体选择弹窗 */}
+            {showSystemFonts && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowSystemFonts(false)}>
+                <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                  {/* 头部 */}
+                  <div className="flex justify-between items-center p-4 border-b border-[#2a2a2a]">
+                    <h3 className="text-sm font-medium text-gray-100">选择系统字体</h3>
+                    <button
+                      className="text-gray-400 hover:text-gray-200"
+                      onClick={() => setShowSystemFonts(false)}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* 字体列表 */}
+                  <div className="flex-1 overflow-y-auto p-4">
+                    {loadingFonts ? (
+                      <div className="text-center text-gray-400 py-8">加载中...</div>
+                    ) : systemFonts.length === 0 ? (
+                      <div className="text-center text-gray-400 py-8">未找到系统字体</div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        {systemFonts.map((font, index) => (
+                          <button
+                            key={`${font.family}-${index}`}
+                            className={`px-3 py-2 text-sm text-left hover:bg-[#2a2a2a] rounded ${
+                              selectedFont === font.family ? 'bg-[#2a2a2a] text-gold' : 'text-gray-100'
+                            }`}
+                            style={{ fontFamily: font.family }}
+                            onClick={() => {
+                              onFontChange(font.family);
+                              setShowSystemFonts(false);
+                              setIsExpanded(false);
+                            }}
+                          >
+                            {font.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 底部 */}
+                  <div className="p-4 border-t border-[#2a2a2a]">
+                    <button
+                      className="w-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-gray-100 text-sm py-2 rounded"
+                      onClick={() => setShowSystemFonts(false)}
+                    >
+                      取消
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
