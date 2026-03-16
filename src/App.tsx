@@ -33,6 +33,8 @@ function App() {
     bookTitle: '',
     author: '',
     styleId: 'dark-gold',
+    fontFamily: '"PingFang SC", "Microsoft YaHei", sans-serif',
+    handwritingFont: '"ZCOOL QingKe HuangYou", "Caveat", cursive',
   });
 
   /**
@@ -63,6 +65,9 @@ function App() {
           onDataChange={handleDataChange}
           onSave={handleSave}
           onStyleChange={(styleId) => handleDataChange({ styleId })}
+          onFontChange={(type, fontFamily) =>
+            handleDataChange(type === 'body' ? { fontFamily } : { handwritingFont: fontFamily })
+          }
         />
       </Resizable>
 

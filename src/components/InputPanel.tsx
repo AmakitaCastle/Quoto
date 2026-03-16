@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { CardData } from '@/types';
 import { SAMPLE_QUOTES } from '@/data/sampleQuotes';
 import { StylePicker } from './StylePicker';
+import { FontPicker } from './FontPicker';
 
 /** 输入面板组件的属性 */
 interface InputPanelProps {
@@ -26,6 +27,9 @@ interface InputPanelProps {
 
   /** 风格变化回调 */
   onStyleChange?: (styleId: CardData['styleId']) => void;
+
+  /** 字体变化回调 */
+  onFontChange?: (type: 'body' | 'handwriting', fontFamily: string) => void;
 }
 
 /**
@@ -39,7 +43,7 @@ interface InputPanelProps {
  *
  * @param props - 组件属性
  */
-export function InputPanel({ data, onDataChange, onSave, onStyleChange }: InputPanelProps) {
+export function InputPanel({ data, onDataChange, onSave, onStyleChange, onFontChange }: InputPanelProps) {
   /** 填充示例数据 */
   const handleFillSample = () => {
     const randomQuote = SAMPLE_QUOTES[Math.floor(Math.random() * SAMPLE_QUOTES.length)];
@@ -96,6 +100,24 @@ export function InputPanel({ data, onDataChange, onSave, onStyleChange }: InputP
         <StylePicker
           selectedStyle={data.styleId}
           onStyleChange={onStyleChange || ((styleId) => onDataChange({ styleId }))}
+        />
+      </div>
+
+      {/* 正文字体选择器 */}
+      <div className="mb-4 flex-shrink-0">
+        <FontPicker
+          type="body"
+          selectedFont={data.fontFamily || '"PingFang SC", "Microsoft YaHei", sans-serif'}
+          onFontChange={(fontFamily) => onFontChange?.('body', fontFamily)}
+        />
+      </div>
+
+      {/* 手写字体选择器 */}
+      <div className="mb-4 flex-shrink-0">
+        <FontPicker
+          type="handwriting"
+          selectedFont={data.handwritingFont || '"ZCOOL QingKe HuangYou", "Caveat", cursive'}
+          onFontChange={(fontFamily) => onFontChange?.('handwriting', fontFamily)}
         />
       </div>
 
