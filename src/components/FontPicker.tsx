@@ -6,7 +6,7 @@
  * @package src/components
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import fontsData from '@/data/fonts.json';
 
@@ -37,6 +37,9 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
   const [showSystemFonts, setShowSystemFonts] = useState(false);
   const [systemFonts, setSystemFonts] = useState<SystemFont[]>([]);
   const [loadingFonts, setLoadingFonts] = useState(false);
+  const [displayCount, setDisplayCount] = useState(5);         // 当前显示数量
+  const [searchQuery, setSearchQuery] = useState('');          // 搜索关键词
+  const searchInputRef = useRef<HTMLInputElement>(null);       // 搜索框引用
 
   // 根据类型获取字体列表
   const fontList = type === 'body' ? fontsData.bodyFonts : fontsData.handwritingFonts;
