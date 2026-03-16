@@ -88,6 +88,24 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
     setSearchQuery('');
   };
 
+  // ESC 键关闭弹窗
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showSystemFonts) {
+        handleCloseModal();
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [showSystemFonts, handleCloseModal]);
+
+  // 打开弹窗时自动聚焦搜索框
+  useEffect(() => {
+    if (showSystemFonts && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showSystemFonts]);
+
   return (
     <div className="mb-4">
       <label className="text-xs text-gray-500 mb-2 block">{label}</label>
@@ -142,14 +160,14 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
 
             {/* 系统字体选择弹窗 */}
             {showSystemFonts && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowSystemFonts(false)}>
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseModal}>
                 <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
                   {/* 头部 */}
                   <div className="flex justify-between items-center p-4 border-b border-[#2a2a2a]">
                     <h3 className="text-sm font-medium text-gray-100">选择系统字体</h3>
                     <button
                       className="text-gray-400 hover:text-gray-200"
-                      onClick={() => setShowSystemFonts(false)}
+                      onClick={handleCloseModal}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -189,7 +207,7 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
                   <div className="p-4 border-t border-[#2a2a2a]">
                     <button
                       className="w-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-gray-100 text-sm py-2 rounded"
-                      onClick={() => setShowSystemFonts(false)}
+                      onClick={handleCloseModal}
                     >
                       取消
                     </button>
