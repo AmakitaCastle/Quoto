@@ -162,17 +162,40 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
             {showSystemFonts && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseModal}>
                 <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-                  {/* 头部 */}
-                  <div className="flex justify-between items-center p-4 border-b border-[#2a2a2a]">
-                    <h3 className="text-sm font-medium text-gray-100">选择系统字体</h3>
-                    <button
-                      className="text-gray-400 hover:text-gray-200"
-                      onClick={handleCloseModal}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  {/* 头部 + 搜索框 */}
+                  <div className="flex flex-col gap-3 p-4 border-b border-[#2a2a2a]">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-medium text-gray-100">选择系统字体</h3>
+                      <button
+                        className="text-gray-400 hover:text-gray-200"
+                        onClick={handleCloseModal}
+                        type="button"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* 搜索框 */}
+                    <div className="relative">
+                      <svg
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
-                    </button>
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="搜索字体名称或族名..."
+                        className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-md pl-10 pr-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-gold"
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                      />
+                    </div>
                   </div>
 
                   {/* 字体列表 */}
