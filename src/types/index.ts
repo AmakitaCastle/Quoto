@@ -3,7 +3,7 @@
  *
  * 本文件定义了书摘卡片应用的所有核心数据类型：
  * - CardData: 卡片渲染所需的数据结构
- * - CardStyleId: 四种内置风格的唯一标识
+ * - CardStyleId: 十种内置风格的唯一标识
  * - CardStyle: 每种风格的视觉配置
  */
 
@@ -38,13 +38,35 @@ export interface CardData {
 /**
  * 卡片风格 ID 类型
  *
- * 四种内置风格的唯一标识符：
+ * 十种内置风格的唯一标识符：
+ *
+ * 经典四色：
  * - 'dark-gold': 暗金风格，金色 accentColor (#d0b87c)
  * - 'parchment': 羊皮纸风格，深棕色 accentColor (#2a1810)
  * - 'ink-green': 墨绿风格，浅绿色 accentColor (#81c1a1)
  * - 'pure-black': 纯黑风格，银灰色 accentColor (#c1c1c1)
+ *
+ * 中式气质：
+ * - 'ink-wash': 水墨风格，墨黑 accentColor (#1e1408)
+ * - 'xuan-paper': 宣纸风格，朱砂红 accentColor (#a05014)
+ * - 'night-ink': 夜墨风格，紫色 accentColor (#8c78dc)
+ *
+ * 季节感：
+ * - 'deep-autumn': 深秋风格，橙铜色 accentColor (#c87828)
+ * - 'first-snow': 初雪风格，蓝灰 accentColor (#6478b4)
+ * - 'spring-day': 春日风格，草绿 accentColor (#4a8c3c)
  */
-export type CardStyleId = 'dark-gold' | 'parchment' | 'ink-green' | 'pure-black';
+export type CardStyleId =
+  | 'dark-gold'
+  | 'parchment'
+  | 'ink-green'
+  | 'pure-black'
+  | 'ink-wash'
+  | 'xuan-paper'
+  | 'night-ink'
+  | 'deep-autumn'
+  | 'first-snow'
+  | 'spring-day';
 
 /**
  * 卡片风格配置接口
