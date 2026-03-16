@@ -135,7 +135,8 @@ export function renderCardToCanvas(
       quoteStartY,
       textAreaWidth,
       FONT_SIZE,
-      data.fontFamily
+      data.fontFamily,
+      FONT_SIZE * 2
     );
 
     // ── 闭引号 ──────────────────────────────────────────────────────────────
