@@ -63,6 +63,31 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
     }
   };
 
+  // 过滤字体（支持名称和族名搜索）
+  const filteredFonts = systemFonts.filter(font =>
+    font.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+    font.family.toLowerCase().includes(searchQuery.trim().toLowerCase())
+  );
+
+  // 分页显示
+  const displayedFonts = filteredFonts.slice(0, displayCount);
+
+  // 搜索时重置分页
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setDisplayCount(5); // 重置为初始数量
+  };
+
+  // 加载更多
+  const handleLoadMore = () => setDisplayCount(prev => prev + 5);
+
+  // 关闭弹窗时重置状态
+  const handleCloseModal = () => {
+    setShowSystemFonts(false);
+    setDisplayCount(5);
+    setSearchQuery('');
+  };
+
   return (
     <div className="mb-4">
       <label className="text-xs text-gray-500 mb-2 block">{label}</label>
