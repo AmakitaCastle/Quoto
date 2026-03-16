@@ -2,7 +2,7 @@
  * 输入面板组件
  *
  * 提供用户输入书摘信息的表单界面。
- * 包含句子、书名、作者三个输入字段，以及填充示例和保存按钮。
+ * 包含句子、书名、作者三个输入字段，以及风格选择器和保存按钮。
  *
  * @package src/components
  */
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CardData } from '@/types';
 import { SAMPLE_QUOTES } from '@/data/sampleQuotes';
+import { StylePicker } from './StylePicker';
 
 /** 输入面板组件的属性 */
 interface InputPanelProps {
@@ -22,6 +23,9 @@ interface InputPanelProps {
 
   /** 保存按钮点击回调 */
   onSave: () => void;
+
+  /** 风格变化回调 */
+  onStyleChange?: (styleId: CardData['styleId']) => void;
 }
 
 /**
@@ -35,7 +39,7 @@ interface InputPanelProps {
  *
  * @param props - 组件属性
  */
-export function InputPanel({ data, onDataChange, onSave }: InputPanelProps) {
+export function InputPanel({ data, onDataChange, onSave, onStyleChange }: InputPanelProps) {
   /** 填充示例数据 */
   const handleFillSample = () => {
     const randomQuote = SAMPLE_QUOTES[Math.floor(Math.random() * SAMPLE_QUOTES.length)];
@@ -84,6 +88,14 @@ export function InputPanel({ data, onDataChange, onSave }: InputPanelProps) {
           placeholder="作者（选填）"
           value={data.author || ''}
           onChange={(e) => onDataChange({ author: e.target.value })}
+        />
+      </div>
+
+      {/* 风格选择器 */}
+      <div className="mb-4 flex-shrink-0">
+        <StylePicker
+          selectedStyle={data.styleId}
+          onStyleChange={onStyleChange || ((styleId) => onDataChange({ styleId }))}
         />
       </div>
 
