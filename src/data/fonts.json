@@ -1,0 +1,16 @@
+{
+  "bodyFonts": [
+    {"id": "system", "name": "系统默认", "family": "\"PingFang SC\", \"Microsoft YaHei\", sans-serif", "preview": "系统默认字体"},
+    {"id": "songti", "name": "思源宋体", "family": "\"Noto Serif SC\", serif", "preview": "思源宋体是一种专门针对中文印刷设计的字体"},
+    {"id": "kaiti", "name": "楷体", "family": "\"KaiTi\", \"STKaiti\", cursive", "preview": "楷体是汉字书法的印刷字体"},
+    {"id": "fangsong", "name": "仿宋", "family": "\"FangSong\", \"STFangSong\", cursive", "preview": "仿宋是一种传统的印刷字体风格"},
+    {"id": "heiti", "name": "黑体", "family": "\"Heiti SC\", \"Microsoft YaHei\", sans-serif", "preview": "黑体是一种无衬线的印刷字体"}
+  ],
+  "handwritingFonts": [
+    {"id": "zcool", "name": "站酷庆科黄油体", "family": "\"ZCOOL QingKe HuangYou\", cursive", "preview": "站酷庆科黄油体"},
+    {"id": "caveat", "name": "Caveat", "family": "\"Caveat\", cursive", "preview": "Caveat"},
+    {"id": "dancing", "name": "Dancing Script", "family": "\"Dancing Script\", cursive", "preview": "Dancing Script"},
+    {"id": "greatvibes", "name": "Great Vibes", "family": "\"Great Vibes\", cursive", "preview": "Great Vibes"},
+    {"id": "yesteryear", "name": "Yesteryear", "family": "\"Yesteryear\", cursive", "preview": "Yesteryear"}
+  ]
+}

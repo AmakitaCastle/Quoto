@@ -122,24 +122,25 @@ export function renderCardToCanvas(
 
     // ── 开引号 ──────────────────────────────────────────────────────────────
     ctx.fillStyle = style.quoteColor ?? style.accentColor;
-    ctx.font = BODY_FONT(OPENING_QUOTE_SIZE);
+    ctx.font = BODY_FONT(OPENING_QUOTE_SIZE, data.fontFamily);
     ctx.fillText(quotes.open, CONTENT_START_X, openQuoteY);
 
     // ── 正文 ────────────────────────────────────────────────────────────────
     ctx.fillStyle = style.textColor;
-    ctx.font = BODY_FONT(FONT_SIZE);
+    ctx.font = BODY_FONT(FONT_SIZE, data.fontFamily);
     quoteEndY = wrapText(
       ctx,
       data.quote,
       CONTENT_START_X,
       quoteStartY,
       textAreaWidth,
-      FONT_SIZE
+      FONT_SIZE,
+      data.fontFamily
     );
 
     // ── 闭引号 ──────────────────────────────────────────────────────────────
     ctx.fillStyle = style.quoteColor ?? style.accentColor;
-    ctx.font = BODY_FONT(OPENING_QUOTE_SIZE * 0.75);
+    ctx.font = BODY_FONT(OPENING_QUOTE_SIZE * 0.75, data.fontFamily);
     ctx.fillText(quotes.close, CONTENT_START_X, quoteEndY + OPENING_QUOTE_SIZE * 0.5);
   }
 
@@ -158,7 +159,7 @@ export function renderCardToCanvas(
   // ── 书名（手写斜体，右对齐，自动添加书名号）──────────────────────────────
   if (data.bookTitle?.trim()) {
     ctx.fillStyle = style.accentColor;
-    ctx.font = HANDWRITING_FONT(BOOK_TITLE_SIZE);
+    ctx.font = HANDWRITING_FONT(BOOK_TITLE_SIZE, data.handwritingFont);
 
     // 测量《书名》各部分宽度，实现整体右对齐
     const openBracketW = ctx.measureText('《').width;
@@ -178,7 +179,7 @@ export function renderCardToCanvas(
   // ── 作者（手写斜体，右对齐）──────────────────────────────────────────────
   if (data.author?.trim()) {
     ctx.fillStyle = style.accentColor;
-    ctx.font = HANDWRITING_FONT(AUTHOR_SIZE);
+    ctx.font = HANDWRITING_FONT(AUTHOR_SIZE, data.handwritingFont);
     const authorW = ctx.measureText(data.author).width;
     ctx.fillText(
       data.author,
@@ -204,6 +205,7 @@ export function renderCardToCanvas(
  * @param y - 起始 Y 坐标
  * @param maxWidth - 最大可用宽度
  * @param fontSize - 字号
+ * @param fontFamily - 自定义字体族（可选）
  * @param indent - 首行缩进量，默认 2 倍字号
  * @returns 文本结束时的 Y 坐标
  */
@@ -214,12 +216,15 @@ function wrapText(
   y: number,
   maxWidth: number,
   fontSize: number,
+  fontFamily?: string,
   indent: number = fontSize * 2
 ): number {
   const lineHeight = fontSize * LINE_HEIGHT_MULTIPLIER;
   const PERIOD = '。';
   const segments = text.split(PERIOD).filter(s => s.trim());
   let currentY = y;
+
+  ctx.font = BODY_FONT(fontSize, fontFamily);
 
   for (const segment of segments) {
     const firstLineX = x + indent;

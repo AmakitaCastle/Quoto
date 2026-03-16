@@ -19,14 +19,24 @@ import { CardData } from '@/types';
  * @param size - 字体大小（像素）
  * @returns Canvas font 字符串
  */
-export const BODY_FONT = (size: number) => `${size}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+export const BODY_FONT = (size: number, fontFamily?: string) => {
+  if (fontFamily) {
+    return `${size}px ${fontFamily}`;
+  }
+  return `${size}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+};
 
 /**
  * 标题字体配置（中等字重）
  * @param size - 字体大小（像素）
  * @returns Canvas font 字符串
  */
-export const TITLE_FONT = (size: number) => `500 ${size}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+export const TITLE_FONT = (size: number, fontFamily?: string) => {
+  if (fontFamily) {
+    return `500 ${size}px ${fontFamily}`;
+  }
+  return `500 ${size}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+};
 
 /**
  * 手写字体配置（用于书名和作者）
@@ -34,8 +44,12 @@ export const TITLE_FONT = (size: number) => `500 ${size}px "PingFang SC", "Micro
  * @param size - 字体大小（像素）
  * @returns Canvas font 字符串
  */
-export const HANDWRITING_FONT = (size: number) =>
-  `italic ${size}px "ZCOOL QingKe HuangYou", "Caveat", cursive`;
+export const HANDWRITING_FONT = (size: number, fontFamily?: string) => {
+  if (fontFamily) {
+    return `italic ${size}px ${fontFamily}`;
+  }
+  return `italic ${size}px "ZCOOL QingKe HuangYou", "Caveat", cursive`;
+};
 
 // ============================================================================
 // 布局常量
@@ -146,7 +160,7 @@ export function getCanvasDimensions(
   const lineHeight = FONT_SIZE * LINE_HEIGHT_MULTIPLIER;
   const textAreaWidth = canvasWidth - 2 * CONTENT_START_X - SAFE_MARGIN;
 
-  ctx.font = BODY_FONT(FONT_SIZE);
+  ctx.font = BODY_FONT(FONT_SIZE, data.fontFamily);
 
   // 计算正文需要多少行
   const { lineCount } = calculateWrapText(
@@ -154,7 +168,8 @@ export function getCanvasDimensions(
     data.quote,
     textAreaWidth,
     lineHeight,
-    FONT_SIZE
+    FONT_SIZE,
+    data.fontFamily
   );
 
   const quoteHeight = lineCount * lineHeight;
@@ -205,6 +220,7 @@ export function getCanvasDimensions(
  * @param maxWidth - 最大可用宽度（像素）
  * @param lineHeight - 行高（像素）
  * @param fontSize - 字号（像素），默认 32
+ * @param fontFamily - 自定义字体族（可选）
  * @returns 行数和总高度
  */
 export function calculateWrapText(
@@ -212,9 +228,10 @@ export function calculateWrapText(
   text: string,
   maxWidth: number,
   lineHeight: number,
-  fontSize: number = 32
+  fontSize: number = 32,
+  fontFamily?: string
 ): { lineCount: number; totalHeight: number } {
-  ctx.font = BODY_FONT(fontSize);
+  ctx.font = BODY_FONT(fontSize, fontFamily);
 
   const characters = text.split('');
   let line = '';
