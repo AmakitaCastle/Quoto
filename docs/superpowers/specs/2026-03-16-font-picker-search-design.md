@@ -15,18 +15,20 @@
 ### 1. 新增状态变量
 
 ```typescript
+import { useState, useEffect, useRef } from 'react';
+
 const [displayCount, setDisplayCount] = useState(5);         // 当前显示数量
 const [searchQuery, setSearchQuery] = useState('');          // 搜索关键词
-const [searchInputRef, setSearchInputRef] = useState<HTMLInputElement | null>(null); // 搜索框引用
+const searchInputRef = useRef<HTMLInputElement>(null);       // 搜索框引用
 ```
 
 ### 2. 核心逻辑
 
-**过滤字体：**
+**过滤字体（添加 trim 处理）：**
 ```typescript
 const filteredFonts = systemFonts.filter(font =>
-  font.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  font.family.toLowerCase().includes(searchQuery.toLowerCase())
+  font.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+  font.family.toLowerCase().includes(searchQuery.trim().toLowerCase())
 );
 ```
 
@@ -77,6 +79,28 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 | 点击"加载更多" | displayCount + 5 |
 | 显示全部字体后 | 隐藏"加载更多"按钮 |
 | 点击"取消"或关闭 | 关闭弹窗，重置状态 |
+
+### 4b. 状态重置函数
+
+```typescript
+// 关闭弹窗时重置状态
+const handleCloseModal = () => {
+  setShowSystemFonts(false);
+  setDisplayCount(5);
+  setSearchQuery('');
+};
+```
+
+### 4c. 自动聚焦逻辑
+
+```typescript
+// 打开弹窗时自动聚焦搜索框
+useEffect(() => {
+  if (showSystemFonts && searchInputRef.current) {
+    searchInputRef.current.focus();
+  }
+}, [showSystemFonts]);
+```
 
 ### 5. 条件渲染
 
