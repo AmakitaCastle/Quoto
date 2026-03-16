@@ -33,6 +33,12 @@ export interface CardData {
    * - 'auto': 自动根据内容选择（默认）
    */
   orientation?: 'vertical' | 'horizontal' | 'auto';
+
+  /** 正文字体（可选） */
+  fontFamily?: string;
+
+  /** 书名/作者字体（可选） */
+  handwritingFont?: string;
 }
 
 /**
@@ -120,4 +126,23 @@ export interface StyleGroup {
 
   /** 该分组包含的风格 ID 列表 */
   styles: CardStyleId[];
+}
+
+/**
+ * 字体配置接口
+ *
+ * 用于定义可用字体的配置信息，包括字体 ID、名称、CSS 字体族和预览文本。
+ */
+export interface FontConfig {
+  /** 字体唯一标识 */
+  id: string;
+
+  /** 字体显示名称 */
+  name: string;
+
+  /** CSS font-family 值 */
+  family: string;
+
+  /** 预览文本 */
+  preview: string;
 }
