@@ -40,6 +40,8 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
   const [displayCount, setDisplayCount] = useState(5);         // 当前显示数量
   const [searchQuery, setSearchQuery] = useState('');          // 搜索关键词
   const searchInputRef = useRef<HTMLInputElement>(null);       // 搜索框引用
+  const triggerButtonRef = useRef<HTMLButtonElement>(null);    // 触发按钮引用
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null); // 下拉框位置
 
   // 根据类型获取字体列表
   const fontList = type === 'body' ? fontsData.bodyFonts : fontsData.handwritingFonts;
@@ -106,12 +108,24 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
     }
   }, [showSystemFonts]);
 
+  // 计算下拉框位置
+  useEffect(() => {
+    if (isExpanded && triggerButtonRef.current) {
+      const rect = triggerButtonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+      });
+    }
+  }, [isExpanded]);
+
   return (
     <div className="mb-4">
       <label className="text-xs text-gray-500 mb-2 block">{label}</label>
 
       <div className="relative">
         <button
+          ref={triggerButtonRef}
           className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-md px-3 py-2 text-sm text-gray-100 text-left flex justify-between items-center"
           onClick={() => setIsExpanded(!isExpanded)}
           style={{ fontFamily: selectedFont }}
@@ -127,8 +141,15 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
           </svg>
         </button>
 
-        {isExpanded && (
-          <div className="absolute z-50 w-full mt-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-md shadow-lg max-h-64 overflow-y-auto">
+        {isExpanded && dropdownPosition && (
+          <div
+            className="fixed z-[100] w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-md shadow-lg max-h-64 overflow-y-auto"
+            style={{
+              top: dropdownPosition.top,
+              left: dropdownPosition.left,
+              width: triggerButtonRef.current?.offsetWidth || '100%',
+            }}
+          >
             {fontList.map((font) => (
               <button
                 key={font.id}
