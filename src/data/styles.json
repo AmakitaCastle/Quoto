@@ -90,5 +90,22 @@
       "textColor": "#1a2414",
       "quoteColor": "rgba(74,140,60,0.6)"
     }
+  ],
+  "groups": [
+    {
+      "id": "classic",
+      "name": "经典四色",
+      "styles": ["dark-gold", "parchment", "ink-green", "pure-black"]
+    },
+    {
+      "id": "chinese",
+      "name": "中式气质",
+      "styles": ["ink-wash", "xuan-paper", "night-ink"]
+    },
+    {
+      "id": "seasonal",
+      "name": "季节感",
+      "styles": ["deep-autumn", "first-snow", "spring-day"]
+    }
   ]
 }

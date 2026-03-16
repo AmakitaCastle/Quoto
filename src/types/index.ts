@@ -105,3 +105,19 @@ export interface CardStyle {
    */
   quoteColor?: string;
 }
+
+/**
+ * 风格分组配置接口
+ *
+ * 用于将风格按类别分组展示，支持 Tab 分页式选择器。
+ */
+export interface StyleGroup {
+  /** 分组唯一标识 */
+  id: string;
+
+  /** 分组显示名称，如"经典四色"、"中式气质" */
+  name: string;
+
+  /** 该分组包含的风格 ID 列表 */
+  styles: CardStyleId[];
+}
