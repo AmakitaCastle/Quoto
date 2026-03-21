@@ -1,4 +1,4 @@
-# 字体选择器系统字体懒加载设计文档
+# 字体选择器系统字体内联分批加载设计文档
 
 **日期**: 2026-03-21
 **作者**: Claude
@@ -12,13 +12,22 @@
 当前字体选择器的"更多系统字体"功能使用模态对话框展示系统字体列表。这种设计增加了用户操作的认知负担，需要在一个新的弹窗中完成选择，然后再关闭弹窗回到主界面。
 
 ### 1.2 目标
-将系统字体列表集成到原有的下拉列表中，通过懒加载方式逐步加载系统字体，提供更流畅的用户体验。
+将系统字体列表集成到原有的下拉列表中，通过分批加载方式逐步显示系统字体，移除模态对话框，提供更流畅的用户体验。
 
 ### 1.3 范围
 - 修改 `FontPicker.tsx` 组件
 - 移除模态对话框 UI 和交互逻辑
-- 实现下拉列表内的懒加载机制
+- 移除搜索框功能（当前模态对话框中的搜索）
+- 实现下拉列表内的分批显示机制（一次性加载，分批显示）
 - 保持后端 `get_system_fonts` 命令不变
+
+### 1.4 术语说明
+本文档中"懒加载"指"分批显示"（lazy rendering），即：
+- 前端一次性获取所有系统字体
+- 初始只渲染前 N 个字体
+- 滚动时逐步增加渲染数量
+
+这与后端分页加载不同，本设计中后端接口一次性返回全部数据。
 
 ---
 
@@ -28,14 +37,10 @@
 ```
 FontPicker
 ├── 触发按钮 (当前选中字体)
-└── 下拉列表 (绝对定位)
+└── 下拉列表 (绝对定位，max-h-64，带滚动)
     ├── 预设字体列表 (来自 fonts.json)
     ├── 分隔线
-    └── "更多系统字体..."按钮 → 点击后打开模态对话框
-        └── 模态对话框
-            ├── 搜索框
-            ├── 系统字体网格列表 (2 列)
-            └── 加载更多按钮
+    └── "更多系统字体..."按钮 → 点击后内联加载系统字体
 ```
 
 ### 2.2 数据流
@@ -46,7 +51,7 @@ FontPicker
   → 后端执行 system_profiler / fc-list
   → 返回 FontInfo[] 数组
   → 存储在 systemFonts 状态
-  → 在模态对话框中展示
+  → 在下拉列表中内联显示（分批渲染）
 ```
 
 ---
@@ -68,11 +73,13 @@ FontPicker
 
 | 状态名 | 类型 | 说明 |
 |--------|------|------|
-| `systemFonts` | `SystemFont[]` | 已加载的系统字体列表 |
-| `systemFontsLoaded` | `boolean` | 是否已经开始加载系统字体 |
-| `loadingSystemFonts` | `boolean` | 是否正在加载中 |
+| `systemFonts` | `SystemFont[]` | 已加载的系统字体列表（一次性加载全部） |
+| `loadingSystemFonts` | `boolean` | 是否正在加载中（兼作防抖标志位） |
 | `systemFontDisplayCount` | `number` | 当前显示的系统字体数量 |
-| `hasMoreSystemFonts` | `boolean` | 是否还有更多系统字体可加载 |
+
+**移除的状态变量**（相对于审查前版本）：
+- `systemFontsLoaded` - 冗余状态，通过 `systemFonts.length > 0` 或 `!loadingSystemFonts` 可推导
+- `hasMoreSystemFonts` - 冗余状态，通过 `systemFontDisplayCount < systemFonts.length` 可推导
 
 ### 3.3 交互流程
 
@@ -118,18 +125,18 @@ FontPicker
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 3.4 懒加载逻辑
+### 3.4 分批加载逻辑
 
 ```typescript
-// 每批加载数量
+// 每批显示数量
 const BATCH_SIZE = 20;
 
 // 初始显示数量
-const INITIAL_DISPLAY_COUNT = 5;
+const INITIAL_DISPLAY_COUNT = 20;
 
-// 加载第一批系统字体
+// 加载系统字体（一次性获取全部，分批显示）
 const handleLoadSystemFonts = async () => {
-  if (loadingSystemFonts || systemFontsLoaded) return;
+  if (loadingSystemFonts) return; // 防止重复点击
 
   setLoadingSystemFonts(true);
   try {
@@ -140,21 +147,27 @@ const handleLoadSystemFonts = async () => {
     );
     setSystemFonts(sortedFonts);
     setSystemFontDisplayCount(INITIAL_DISPLAY_COUNT);
-    setSystemFontsLoaded(true);
   } catch (err) {
     console.error('Failed to load system fonts:', err);
+    // 加载失败时重置状态，允许用户重试
+    setSystemFontDisplayCount(0);
   } finally {
     setLoadingSystemFonts(false);
   }
 };
 
-// 加载更多
+// 加载更多（增加显示数量）
 const handleLoadMoreSystemFonts = () => {
-  setSystemFontDisplayCount(prev => prev + BATCH_SIZE);
+  setSystemFontDisplayCount(prev =>
+    Math.min(prev + BATCH_SIZE, systemFonts.length)
+  );
 };
 
 // 滚动监听 - 自动加载更多
+// 使用 loadingSystemFonts 作为天然防抖标志位
 const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+  if (loadingSystemFonts) return; // 加载中不触发
+
   const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
   // 距离底部 50px 时触发加载
   if (scrollHeight - scrollTop - clientHeight < 50 &&
@@ -163,6 +176,11 @@ const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
   }
 };
 ```
+
+**设计说明**：
+- 不使用额外的 debounce/throttle，利用 `loadingSystemFonts` 状态自然防止重复触发
+- 加载失败时重置 `systemFontDisplayCount` 为 0，用户可以重新点击"更多系统字体"重试
+- 初始显示 20 个字体（不是一次加载 5 个）
 
 ### 3.5 数据结构
 
@@ -185,14 +203,21 @@ struct FontInfo {
 
 ### 4.1 加载失败
 - 如果 `get_system_fonts` 调用失败，在控制台输出错误日志
+- 加载失败时重置 `systemFontDisplayCount` 为 0
 - "更多系统字体"按钮恢复为可点击状态，用户可以重试
 
 ### 4.2 空状态
-- 如果系统字体列表为空，不显示"更多系统字体"按钮
+- 如果系统字体列表为空（`systemFonts.length === 0`），不显示"更多系统字体"按钮
+- 分隔线也不显示
 
 ### 4.3 加载中状态
 - 加载期间按钮显示"正在加载..."并禁用点击
-- 防止用户重复触发加载
+- 利用 `loadingSystemFonts` 状态防止重复触发
+
+### 4.4 滚动冲突处理
+- 下拉列表容器设置固定 `max-h-64`（160px）
+- 当系统字体内容高度超过容器高度时，容器本身出现滚动条
+- 滚动事件绑定在容器上，不会与内部字体列表产生滚动冲突
 
 ---
 
@@ -203,11 +228,18 @@ struct FontInfo {
 - 不显示"加载更多"按钮
 
 ### 5.2 用户快速滚动
-- 滚动加载有防抖保护，避免短时间内触发多次加载
+- 利用 `loadingSystemFonts` 标志位防止重复触发
+- 滚动事件中先检查 `if (loadingSystemFonts) return`
 
 ### 5.3 字体名称重复
 - 后端已使用 `HashSet` 去重（Linux）
 - macOS 和 Windows 返回的字体列表理论上不重复
+
+### 5.4 下拉列表容器高度
+- 容器 `max-h-64` (160px) 保持不变
+- 当系统字体展开后，如果内容超过容器高度，容器出现滚动条
+- 初始显示 20 个字体，约占据 600-800px 高度（取决于字体项高度）
+- 用户需要滚动才能看到更多字体，滚动时自动加载更多
 
 ---
 
@@ -286,6 +318,7 @@ className="w-full px-3 py-2 text-xs text-gray-400 text-left hover:bg-[#2a2a2a]"
 
 ## 10. 后续优化建议
 
-1. **搜索功能**: 可以考虑在下拉列表顶部添加搜索框，支持快速过滤系统字体
+1. **搜索功能**: 当前版本移除了搜索框，后续可以在下拉列表顶部添加搜索框，支持快速过滤系统字体
 2. **最近使用**: 记录用户最近使用的系统字体，在下次打开时优先显示
 3. **字体预览**: 在系统字体名称下方显示预览文字（和预设字体一致）
+4. **真正的后端分页**: 如果系统字体数量非常大（>1000），可以考虑修改后端接口支持分页参数
