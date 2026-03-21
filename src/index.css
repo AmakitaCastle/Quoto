@@ -57,3 +57,21 @@
 .font-picker-dropdown::-webkit-scrollbar-thumb:hover {
   background: #5a5a5a;
 }
+
+/* InputPanel 滚动条样式 */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #141414; /* 与 InputPanel 背景色一致 */
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
