@@ -33,10 +33,16 @@ interface FontPickerProps {
  * 字体选择器组件
  */
 export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps) {
+  // 每批显示数量
+  const BATCH_SIZE = 20;
+
+  // 初始显示数量
+  const INITIAL_DISPLAY_COUNT = 20;
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [systemFonts, setSystemFonts] = useState<SystemFont[]>([]);
   const [loadingSystemFonts, setLoadingSystemFonts] = useState(false);
-  const [systemFontDisplayCount, setSystemFontDisplayCount] = useState(20);
+  const [systemFontDisplayCount, setSystemFontDisplayCount] = useState(0);
   const triggerButtonRef = useRef<HTMLButtonElement>(null);    // 触发按钮引用
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null); // 下拉框位置
 
@@ -49,14 +55,23 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
 
   const label = type === 'body' ? '正文字体' : '书名/作者字体';
 
-  // 加载系统字体
+  // 加载系统字体（一次性获取全部，分批显示）
   const handleLoadSystemFonts = async () => {
+    if (loadingSystemFonts) return; // 防止重复点击
+
     setLoadingSystemFonts(true);
     try {
       const fonts = await invoke<SystemFont[]>('get_system_fonts');
-      setSystemFonts(fonts);
+      // 按字母顺序排序
+      const sortedFonts = fonts.sort((a, b) =>
+        a.name.localeCompare(b.name, 'zh-Hans-CN')
+      );
+      setSystemFonts(sortedFonts);
+      setSystemFontDisplayCount(INITIAL_DISPLAY_COUNT);
     } catch (err) {
       console.error('Failed to load system fonts:', err);
+      // 加载失败时重置状态，允许用户重试
+      setSystemFontDisplayCount(0);
     } finally {
       setLoadingSystemFonts(false);
     }
@@ -64,7 +79,9 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
 
   // 加载更多（用于系统字体分批显示）
   const handleLoadMoreSystemFonts = () => {
-    setSystemFontDisplayCount(prev => prev + 20);
+    setSystemFontDisplayCount(prev =>
+      Math.min(prev + BATCH_SIZE, systemFonts.length)
+    );
   };
 
   // 计算下拉框位置
