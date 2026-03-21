@@ -157,17 +157,56 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
               </button>
             ))}
 
-            <div className="border-t border-[#2a2a2a] mt-1 pt-1">
-              <button
-                className="w-full px-3 py-2 text-xs text-gray-400 text-left hover:bg-[#2a2a2a]"
-                onClick={async () => {
-                  await handleLoadSystemFonts();
-                  setIsExpanded(true);
-                }}
-              >
-                更多系统字体...
-              </button>
-            </div>
+            {/* 条件渲染：更多系统字体按钮 / 加载中 / 系统字体列表 */}
+            {systemFonts.length === 0 && !loadingSystemFonts && (
+              <div className="border-t border-[#2a2a2a] mt-1 pt-1">
+                <button
+                  className="w-full px-3 py-2 text-xs text-gray-400 text-left hover:bg-[#2a2a2a]"
+                  onClick={handleLoadSystemFonts}
+                >
+                  更多系统字体...
+                </button>
+              </div>
+            )}
+
+            {loadingSystemFonts && (
+              <div className="border-t border-[#2a2a2a] mt-1 pt-1">
+                <button
+                  className="w-full px-3 py-2 text-xs text-gray-400 text-left cursor-not-allowed"
+                  disabled
+                >
+                  正在加载...
+                </button>
+              </div>
+            )}
+
+            {/* 系统字体列表 - 内联显示 */}
+            {systemFonts.length > 0 && (
+              <>
+                {systemFonts.slice(0, systemFontDisplayCount).map((font, index) => (
+                  <button
+                    key={`${font.family}-${index}`}
+                    className={`w-full px-3 py-2 text-sm text-left hover:bg-[#2a2a2a] ${
+                      selectedFont === font.family ? 'bg-[#2a2a2a] text-gold' : 'text-gray-100'
+                    }`}
+                    style={{ fontFamily: font.family }}
+                    onClick={() => {
+                      onFontChange(font.family);
+                      setIsExpanded(false);
+                    }}
+                  >
+                    {font.name}
+                  </button>
+                ))}
+
+                {/* 加载更多提示 - 当还有更多字体时显示 */}
+                {systemFontDisplayCount < systemFonts.length && (
+                  <div className="px-3 py-2 text-xs text-gray-500 text-center">
+                    滚动加载更多...
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>
