@@ -159,7 +159,7 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
 
             {/* 条件渲染：更多系统字体按钮 / 加载中 / 系统字体列表 */}
             {systemFonts.length === 0 && !loadingSystemFonts && (
-              <div className="border-t border-[#2a2a2a] mt-1 pt-1">
+              <div className="border-t border-[#2a2a2a] mt-1 pt-1 sticky bottom-0 bg-[#1a1a1a] z-10">
                 <button
                   className="w-full px-3 py-2 text-xs text-gray-400 text-left hover:bg-[#2a2a2a]"
                   onClick={handleLoadSystemFonts}
@@ -170,7 +170,7 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
             )}
 
             {loadingSystemFonts && (
-              <div className="border-t border-[#2a2a2a] mt-1 pt-1">
+              <div className="border-t border-[#2a2a2a] mt-1 pt-1 sticky bottom-0 bg-[#1a1a1a] z-10">
                 <button
                   className="w-full px-3 py-2 text-xs text-gray-400 text-left cursor-not-allowed"
                   disabled
@@ -201,7 +201,7 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
 
                 {/* 加载更多提示 - 当还有更多字体时显示 */}
                 {systemFontDisplayCount < systemFonts.length && (
-                  <div className="px-3 py-2 text-xs text-gray-500 text-center">
+                  <div className="sticky bottom-0 bg-[#1a1a1a] px-3 py-2 text-xs text-gray-500 text-center z-10">
                     滚动加载更多...
                   </div>
                 )}
