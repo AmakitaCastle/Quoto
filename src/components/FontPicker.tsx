@@ -84,6 +84,19 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
     );
   };
 
+  // 滚动监听 - 自动加载更多
+  // 使用 loadingSystemFonts 作为天然防抖标志位
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (loadingSystemFonts) return; // 加载中不触发
+
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    // 距离底部 50px 时触发加载
+    if (scrollHeight - scrollTop - clientHeight < 50 &&
+        systemFontDisplayCount < systemFonts.length) {
+      handleLoadMoreSystemFonts();
+    }
+  };
+
   // 计算下拉框位置
   useEffect(() => {
     if (isExpanded && triggerButtonRef.current) {
@@ -125,6 +138,7 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
               left: dropdownPosition.left,
               width: triggerButtonRef.current?.offsetWidth || '100%',
             }}
+            onScroll={handleScroll}
           >
             {fontList.map((font) => (
               <button
