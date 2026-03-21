@@ -81,24 +81,43 @@
 
 ### 4.2 滚动条样式
 
-复用项目现有的滚动条样式（已在 `src/index.css` 中定义）：
+需要在 `src/index.css` 中添加 InputPanel 专用的滚动条样式：
 
 ```css
-::-webkit-scrollbar {
+/* InputPanel 滚动条样式 */
+.InputPanel-scroll::-webkit-scrollbar {
   width: 8px;
 }
 
-::-webkit-scrollbar-track {
-  background: #1a1a1a;
+.InputPanel-scroll::-webkit-scrollbar-track {
+  background: #141414;  /* 与 InputPanel 背景色一致 */
 }
 
-::-webkit-scrollbar-thumb {
+.InputPanel-scroll::-webkit-scrollbar-thumb {
   background: #4a4a4a;
   border-radius: 4px;
 }
+
+.InputPanel-scroll::-webkit-scrollbar-thumb:hover {
+  background: #5a5a4a;
+}
 ```
 
-### 4.3 与其他功能的兼容性
+或者使用 Tailwind 的 ` [&::-webkit-scrollbar]` 语法直接在组件中添加样式。
+
+### 4.3 边界情况
+
+**下拉框展开时滚动面板：**
+- 字体选择器下拉框使用 `fixed` 定位，滚动 InputPanel 时下拉框位置保持固定
+- 这是预期行为，与模态对话框类似
+- 用户可以先关闭下拉框再滚动，或者滚动后下拉框仍然可见
+
+**滚动条占用宽度：**
+- 滚动条出现时会占用约 8px 宽度
+- 当前设计已有 `p-4` 内边距，足够容纳滚动条
+- 如有需要可添加 `pr-2` 补偿
+
+### 4.4 与其他功能的兼容性
 
 - **字体选择器下拉框 sticky 定位**：兼容，sticky 定位仍然有效
 - **右侧预览面板**：不受影响
@@ -113,8 +132,14 @@
 - [ ] 窗口高度拉低后，输入面板出现滚动条
 - [ ] 滚动后可以看见并点击"保存卡片"按钮
 - [ ] 字体选择器下拉框展开时，sticky 定位仍然有效
+- [ ] 字体选择器下拉框展开时滚动面板，下拉框保持 fixed 定位
 
-### 5.2 兼容性测试
+### 5.2 边界测试
+- [ ] 窗口高度极小时，滚动区域仍然可用
+- [ ] 下拉框展开时滚动，验证视觉无错位
+- [ ] 滚动条出现时内容宽度不受影响
+
+### 5.3 兼容性测试
 - [ ] macOS 上滚动条样式正确
 - [ ] Windows 上滚动条样式正确
 - [ ] Linux 上滚动条样式正确
@@ -126,6 +151,7 @@
 | 文件 | 操作 | 说明 |
 |------|------|------|
 | `src/components/InputPanel.tsx` | 修改 | 添加 `overflow-y-auto` 类 |
+| `src/index.css` | 修改 | 添加 InputPanel 专用滚动条样式 |
 
 ---
 
