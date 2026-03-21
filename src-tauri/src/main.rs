@@ -41,6 +41,7 @@ fn get_system_fonts() -> Result<Vec<FontInfo>, String> {
     // macOS: 使用 system_profiler 获取字体列表
     #[cfg(target_os = "macos")]
     {
+        use std::collections::HashSet;
         use std::process::Command;
 
         let output = Command::new("system_profiler")
@@ -50,6 +51,7 @@ fn get_system_fonts() -> Result<Vec<FontInfo>, String> {
 
         let output_str = String::from_utf8_lossy(&output.stdout);
         let mut fonts = Vec::new();
+        let mut seen = HashSet::new();
 
         for line in output_str.lines() {
             if line.contains("Name:") {
@@ -57,7 +59,7 @@ fn get_system_fonts() -> Result<Vec<FontInfo>, String> {
                     .unwrap_or("")
                     .trim()
                     .to_string();
-                if !name.is_empty() {
+                if !name.is_empty() && seen.insert(name.clone()) {
                     fonts.push(FontInfo {
                         name: name.clone(),
                         family: name,
