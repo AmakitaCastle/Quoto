@@ -51,7 +51,7 @@ export function InputPanel({ data, onDataChange, onSave, onStyleChange, onFontCh
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#141414] border-r border-[#2a2a2a] p-4">
+    <div className="flex flex-col h-full bg-[#141414] border-r border-[#2a2a2a] p-4 overflow-y-auto">
       {/* 句子输入 */}
       <div className="mb-4 flex-shrink-0">
         <div className="flex justify-between items-center mb-2">
