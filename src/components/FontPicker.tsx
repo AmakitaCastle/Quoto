@@ -62,11 +62,10 @@ export function FontPicker({ type, selectedFont, onFontChange }: FontPickerProps
     }
   };
 
-  // 分页显示
-  const displayedFonts = systemFonts.slice(0, systemFontDisplayCount);
-
-  // 加载更多
-  const handleLoadMore = () => setSystemFontDisplayCount(prev => prev + 20);
+  // 加载更多（用于系统字体分批显示）
+  const handleLoadMoreSystemFonts = () => {
+    setSystemFontDisplayCount(prev => prev + 20);
+  };
 
   // 计算下拉框位置
   useEffect(() => {
