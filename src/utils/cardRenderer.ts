@@ -160,20 +160,28 @@ export function renderCardToCanvas(
   // ── 书名（手写斜体，右对齐，自动添加书名号）──────────────────────────────
   if (data.bookTitle?.trim()) {
     ctx.fillStyle = style.accentColor;
-    ctx.font = HANDWRITING_FONT(BOOK_TITLE_SIZE, data.handwritingFont);
 
-    // 测量《书名》各部分宽度，实现整体右对齐
+    // 书名号使用中文字体，确保正确渲染
+    ctx.font = `${BOOK_TITLE_SIZE}px "PingFang SC", "Microsoft YaHei", sans-serif`;
     const openBracketW = ctx.measureText('《').width;
-    const titleW = ctx.measureText(data.bookTitle).width;
     const closeBracketW = ctx.measureText('》').width;
+
+    // 书名使用手写字体
+    ctx.font = HANDWRITING_FONT(BOOK_TITLE_SIZE, data.handwritingFont);
+    const titleW = ctx.measureText(data.bookTitle).width;
+
     const totalTitleW = openBracketW + titleW + closeBracketW;
 
     // 整体右边缘对齐到 width - CONTENT_START_X
     const titleBaseX = width - CONTENT_START_X - totalTitleW;
     const titleY = dividerY + DIVIDER_TO_TITLE_GAP;
 
+    // 绘制《书名》
+    ctx.font = `${BOOK_TITLE_SIZE}px "PingFang SC", "Microsoft YaHei", sans-serif`;
     ctx.fillText('《', titleBaseX, titleY);
+    ctx.font = HANDWRITING_FONT(BOOK_TITLE_SIZE, data.handwritingFont);
     ctx.fillText(data.bookTitle, titleBaseX + openBracketW, titleY);
+    ctx.font = `${BOOK_TITLE_SIZE}px "PingFang SC", "Microsoft YaHei", sans-serif`;
     ctx.fillText('》', titleBaseX + openBracketW + titleW, titleY);
   }
 
