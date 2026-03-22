@@ -43,19 +43,36 @@ export function CardCanvas({ data }: CardCanvasProps) {
 
   const [backgroundConfig, setBackgroundConfig] = useState<BackgroundConfig | null>(null);
   const [backgroundLoading, setBackgroundLoading] = useState(false);
+  const [loadedImage, setLoadedImage] = useState<HTMLImageElement | null>(null);
 
-  // 加载上传的背景图片（仅在用户上传时处理）
+  // 加载上传的背景图片配置
   useEffect(() => {
     const loadUploadedImage = async () => {
       if (!data.uploadedBackground) {
         setBackgroundConfig(null);
+        setLoadedImage(null);
         return;
       }
 
       setBackgroundLoading(true);
-      const config = await loadBackgroundFromUpload(data.uploadedBackground);
-      setBackgroundConfig(config);
-      setBackgroundLoading(false);
+      try {
+        const config = await loadBackgroundFromUpload(data.uploadedBackground);
+        setBackgroundConfig(config);
+
+        // 预加载图片，确保渲染时图片已就绪
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = data.uploadedBackground;
+        if (img.complete) {
+          setLoadedImage(img);
+        } else {
+          img.onload = () => setLoadedImage(img);
+        }
+      } catch (err) {
+        console.warn('Failed to load background:', err);
+      } finally {
+        setBackgroundLoading(false);
+      }
     };
 
     loadUploadedImage();
@@ -73,9 +90,9 @@ export function CardCanvas({ data }: CardCanvasProps) {
     canvas.width = dimensions.width;
     canvas.height = dimensions.height;
 
-    // 在 Canvas 上绘制完整卡片
-    renderCardToCanvas(canvas, data, style, dimensions.quoteStartY, dimensions.openQuoteY, backgroundConfig ?? undefined);
-  }, [data, style, backgroundConfig]);
+    // 在 Canvas 上绘制完整卡片（传入已加载的图片）
+    renderCardToCanvas(canvas, data, style, dimensions.quoteStartY, dimensions.openQuoteY, backgroundConfig ?? undefined, loadedImage ?? undefined);
+  }, [data, style, backgroundConfig, loadedImage]);
 
   return (
     <div className="relative">

@@ -50,27 +50,19 @@ function drawBackground(
   width: number,
   height: number,
   config: BackgroundConfig | null | undefined,
-  style: CardStyle
+  style: CardStyle,
+  loadedImage?: HTMLImageElement
 ): void {
-  // 如果没有 cover 配置，使用 style 的渐变背景
-  if (!config || config.type !== 'cover' || !config.imageUrl) {
+  // 如果没有 cover 配置或没有已加载的图片，使用 style 的渐变背景
+  if (!config || config.type !== 'cover' || !loadedImage) {
     const gradient = parseGradient(style.background, ctx, height);
     ctx.fillStyle = gradient ?? style.background;
     ctx.fillRect(0, 0, width, height);
     return;
   }
 
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.src = config.imageUrl;
-
-  // 等待图片加载完成（同步绘制场景）
-  if (!img.complete) {
-    img.onload = () => {
-      drawBackground(ctx, width, height, config, style);
-    };
-    return;
-  }
+  // 使用已加载的图片（在 CardCanvas 中预加载）
+  const img = loadedImage;
 
   // 决策参数
   const mode = getMode(config.avgLum, config.textureScore);
@@ -257,6 +249,8 @@ function parseGradient(
  * @param style - 风格配置（颜色、背景等）
  * @param quoteStartY - 正文起始 Y 坐标
  * @param openQuoteY - 开引号起始 Y 坐标
+ * @param backgroundConfig - 背景配置（可选）
+ * @param loadedImage - 已加载的图片（可选，用于 cover 模式）
  */
 export function renderCardToCanvas(
   canvas: HTMLCanvasElement,
@@ -265,6 +259,7 @@ export function renderCardToCanvas(
   quoteStartY: number,
   openQuoteY: number,
   backgroundConfig?: BackgroundConfig,
+  loadedImage?: HTMLImageElement,
 ): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -292,7 +287,7 @@ export function renderCardToCanvas(
   ctx.clip();
 
   // 使用背景配置或默认渐变
-  drawBackground(ctx, width, height, backgroundConfig, style);
+  drawBackground(ctx, width, height, backgroundConfig, style, loadedImage);
 
   ctx.restore();
 
