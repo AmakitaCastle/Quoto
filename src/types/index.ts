@@ -27,10 +27,16 @@ export interface CardData {
   styleId: CardStyleId;
 
   /**
-   * 卡片方向（可选）
-   * - 'vertical': 竖版卡片（宽度 800px）
-   * - 'horizontal': 横版卡片（宽度 1000px）
-   * - 'auto': 自动根据内容选择（默认）
+   * 卡片宽高比（可选，默认 '3:4'）
+   * - '3:4': 竖屏（宽度 : 高度 = 3 : 4）
+   * - '1:1': 方形（宽度 = 高度）
+   * - '4:3': 横屏（宽度 : 高度 = 4 : 3）
+   */
+  aspectRatio?: '3:4' | '1:1' | '4:3';
+
+  /**
+   * 卡片方向（已废弃，使用 aspectRatio 替代）
+   * @deprecated 请使用 aspectRatio
    */
   orientation?: 'vertical' | 'horizontal' | 'auto';
 

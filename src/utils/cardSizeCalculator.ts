@@ -206,8 +206,104 @@ export function getCanvasDimensions(
 }
 
 // ============================================================================
-// 辅助函数
+// 宽高比配置
 // ============================================================================
+
+/** 宽高比映射表 */
+export const ASPECT_RATIOS = {
+  '3:4': { name: '竖屏', ratio: 4 / 3 },
+  '1:1': { name: '方形', ratio: 1 },
+  '4:3': { name: '横屏', ratio: 3 / 4 },
+} as const;
+
+/** 宽高比类型 */
+export type AspectRatio = keyof typeof ASPECT_RATIOS;
+
+/** 默认宽高比 */
+export const DEFAULT_ASPECT_RATIO: AspectRatio = '3:4';
+
+/**
+ * 根据宽高比计算卡片尺寸
+ * @param baseWidth - 基准宽度（像素）
+ * @param aspectRatio - 宽高比
+ * @returns 卡片宽度和高度
+ */
+export function getCardDimensions(
+  baseWidth: number,
+  aspectRatio: AspectRatio = DEFAULT_ASPECT_RATIO
+): { width: number; height: number } {
+  const ratio = ASPECT_RATIOS[aspectRatio]?.ratio ?? ASPECT_RATIOS['3:4'].ratio;
+
+  return {
+    width: baseWidth,
+    height: Math.round(baseWidth * ratio),
+  };
+}
+
+/**
+ * 获取 Canvas 尺寸和关键坐标（新API）
+ * @param ctx - Canvas 2D 上下文
+ * @param data - 卡片数据
+ * @param baseWidth - 基准宽度
+ * @returns Canvas 尺寸和关键坐标
+ */
+export function getCanvasDimensionsV2(
+  ctx: CanvasRenderingContext2D,
+  data: CardData,
+  baseWidth: number = 700
+): CanvasDimensions {
+  const aspectRatio = (data.aspectRatio as AspectRatio) ?? DEFAULT_ASPECT_RATIO;
+  const { width: canvasWidth, height: canvasHeightBase } = getCardDimensions(
+    baseWidth,
+    aspectRatio
+  );
+
+  const lineHeight = FONT_SIZE * LINE_HEIGHT_MULTIPLIER;
+  const textAreaWidth = canvasWidth - 2 * CONTENT_START_X - SAFE_MARGIN;
+
+  ctx.font = BODY_FONT(FONT_SIZE, data.fontFamily);
+
+  // 计算正文需要多少行
+  const { lineCount } = calculateWrapText(
+    ctx,
+    data.quote,
+    textAreaWidth,
+    lineHeight,
+    FONT_SIZE,
+    data.fontFamily
+  );
+
+  const quoteHeight = lineCount * lineHeight;
+
+  // meta 区高度
+  const metaHeight =
+    TEXT_TO_DIVIDER_GAP +
+    DIVIDER_TO_TITLE_GAP +
+    BOOK_TITLE_SIZE +
+    TITLE_TO_AUTHOR_GAP +
+    AUTHOR_SIZE;
+
+  // 坐标计算
+  const openQuoteY = VERTICAL_MARGIN + OPENING_QUOTE_SIZE;
+  const quoteStartY = openQuoteY + OPENING_QUOTE_TO_TEXT + FONT_SIZE;
+
+  // 总高度 = 上边距 + 引号 + 间距 + 正文 + meta 区 + 下边距
+  const totalHeight =
+    VERTICAL_MARGIN +
+    OPENING_QUOTE_SIZE +
+    OPENING_QUOTE_TO_TEXT +
+    FONT_SIZE +
+    quoteHeight +
+    metaHeight +
+    VERTICAL_MARGIN;
+
+  return {
+    width: canvasWidth,
+    height: Math.max(Math.round(totalHeight), canvasHeightBase),
+    quoteStartY: Math.round(quoteStartY),
+    openQuoteY: Math.round(openQuoteY),
+  };
+}
 
 /**
  * 计算文本换行后的行数和总高度

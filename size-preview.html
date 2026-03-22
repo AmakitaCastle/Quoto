@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>字句 - 卡片尺寸预览</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      padding: 40px 20px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: #d4a04a;
+      text-align: center;
+    }
+    .subtitle {
+      color: #888;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .card-preview {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .card-label {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-label .size {
+      color: #d4a04a;
+      font-family: monospace;
+    }
+
+    .canvas-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0a0a0a;
+      border-radius: 8px;
+      padding: 16px;
+      overflow: auto;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+    }
+
+    .annotation {
+      background: #1a2a1a;
+      border-left: 3px solid #51cf66;
+      padding: 16px;
+      margin-top: 32px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .annotation strong {
+      color: #51cf66;
+    }
+
+    .problem-box {
+      background: #2a1a1a;
+      border-left: 3px solid #ff6b6b;
+      padding: 16px;
+      margin-top: 16px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .problem-box strong {
+      color: #ff6b6b;
+    }
+  </style>
+</head>
+<body>
+  <h1>字句 - 卡片尺寸预览</h1>
+  <p class="subtitle">当前实现 vs 新设计方案对比</p>
+
+  <div class="grid">
+    <!-- 当前实现：竖屏 800px -->
+    <div class="card-preview">
+      <div class="card-label">
+        <span>当前：竖屏</span>
+        <span class="size">800px × 动态</span>
+      </div>
+      <div class="canvas-container">
+        <canvas id="current-vertical"></canvas>
+      </div>
+    </div>
+
+    <!-- 当前实现：横屏 1000px -->
+    <div class="card-preview">
+      <div class="card-label">
+        <span>当前：横屏</span>
+        <span class="size">1000px × 动态</span>
+      </div>
+      <div class="canvas-container">
+        <canvas id="current-horizontal"></canvas>
+      </div>
+    </div>
+
+    <!-- 新设计：Compact 3:4 -->
+    <div class="card-preview">
+      <div class="card-label">
+        <span>新设计：Compact 竖屏</span>
+        <span class="size">500px × 667px (3:4)</span>
+      </div>
+      <div class="canvas-container">
+        <canvas id="new-compact-vertical"></canvas>
+      </div>
+    </div>
+
+    <!-- 新设计：Standard 1:1 -->
+    <div class="card-preview">
+      <div class="card-label">
+        <span>新设计：Standard 方形</span>
+        <span class="size">700px × 700px (1:1)</span>
+      </div>
+      <div class="canvas-container">
+        <canvas id="new-standard-square"></canvas>
+      </div>
+    </div>
+
+    <!-- 新设计：Large 4:3 -->
+    <div class="card-preview">
+      <div class="card-label">
+        <span>新设计：Large 横屏</span>
+        <span class="size">900px × 675px (4:3)</span>
+      </div>
+      <div class="canvas-container">
+        <canvas id="new-large-horizontal"></canvas>
+      </div>
+    </div>
+
+    <!-- 新设计：Auto 模式示例 -->
+    <div class="card-preview">
+      <div class="card-label">
+        <span>新设计：Auto (短文本)</span>
+        <span class="size">自动 3:4</span>
+      </div>
+      <div class="canvas-container">
+        <canvas id="new-auto-short"></canvas>
+      </div>
+    </div>
+
+    <!-- 新设计：Auto 模式示例 - 中文本 -->
+    <div class="card-preview">
+      <div class="card-label">
+        <span>新设计：Auto (中文本)</span>
+        <span class="size">自动 1:1</span>
+      </div>
+      <div class="canvas-container">
+        <canvas id="new-auto-medium"></canvas>
+      </div>
+    </div>
+
+    <!-- 新设计：Auto 模式示例 - 长文本 -->
+    <div class="card-preview">
+      <div class="card-label">
+        <span>新设计：Auto (长文本)</span>
+        <span class="size">自动 4:3</span>
+      </div>
+      <div class="canvas-container">
+        <canvas id="new-auto-long"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-color" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);"></div>
+      <span>暗金风格背景</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #d4a04a;"></div>
+      <span>强调色 #d4a04a</span>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <strong>新设计方案优势：</strong><br>
+    1. <strong>固定宽高比</strong>：3:4、1:1、4:3 三种标准比例，视觉更协调<br>
+    2. <strong>三档分辨率</strong>：Compact(500px)、Standard(700px)、Large(900px)<br>
+    3. <strong>真正的 Auto 模式</strong>：根据文本行数自动选择最佳比例<br>
+    4. <strong>Retina 优化</strong>：Canvas 渲染分辨率 ×2，CSS 自适应显示
+  </div>
+
+  <div class="problem-box">
+    <strong>当前实现的问题：</strong><br>
+    1. <strong>宽度只有两档</strong>：800px/1000px，缺少灵活性<br>
+    2. <strong>Auto 模式未实现</strong>：用户需要手动选择方向<br>
+    3. <strong>宽高比不固定</strong>：高度纯动态计算，可能导致比例失调<br>
+    4. <strong>预览失真</strong>：CSS max-width 限制导致显示尺寸与实际不符
+  </div>
+
+  <script type="module">
+    /**
+     * 右对齐辅助：让文字的墨迹右边缘精确对齐到 rightEdge。
+     * 使用 actualBoundingBoxRight 而非 width，避免标点符号的 side-bearing 偏移。
+     */
+    function fillTextAlignRight(ctx, text, rightEdge, y) {
+      const metrics = ctx.measureText(text);
+      // actualBoundingBoxRight 是从绘制起点到墨迹最右端的距离
+      const inkRight = metrics.actualBoundingBoxRight;
+      ctx.fillText(text, rightEdge - inkRight, y);
+    }
+
+    // 渲染函数 - 展示实际文字内容
+    function renderCard(canvasId, width, height, quoteText, bookTitle, author) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // 背景渐变
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, '#1a1a2e');
+      gradient.addColorStop(1, '#16213e');
+
+      // 圆角矩形背景
+      const cornerRadius = Math.min(20, width / 2, height / 2);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(cornerRadius, 0);
+      ctx.lineTo(width - cornerRadius, 0);
+      ctx.quadraticCurveTo(width, 0, width, cornerRadius);
+      ctx.lineTo(width, height - cornerRadius);
+      ctx.quadraticCurveTo(width, height, width - cornerRadius, height);
+      ctx.lineTo(cornerRadius, height);
+      ctx.quadraticCurveTo(0, height, 0, height - cornerRadius);
+      ctx.lineTo(0, cornerRadius);
+      ctx.quadraticCurveTo(0, 0, cornerRadius, 0);
+      ctx.closePath();
+      ctx.clip();
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+      ctx.restore();
+
+      const CONTENT_START_X = 60;
+      const SAFE_MARGIN = 6;
+      const fontSize = 28;
+      const lineHeight = 48;
+      const textAreaWidth = width - 2 * CONTENT_START_X - SAFE_MARGIN;
+
+      // 开引号
+      ctx.fillStyle = '#d4a04a';
+      ctx.font = '48px "PingFang SC"';
+      ctx.fillText('"', CONTENT_START_X, 80);
+
+      // 正文 - 真实文字渲染
+      ctx.fillStyle = '#e0e0e0';
+      ctx.font = `${fontSize}px "PingFang SC"`;
+
+      const chars = quoteText.split('');
+      let line = '';
+      let currentY = 120;
+      let lineX = CONTENT_START_X + 56; // 首行缩进 2 字符
+      let lineWidth = textAreaWidth - 56;
+
+      for (let i = 0; i < chars.length; i++) {
+        const testLine = line + chars[i];
+        const testWidth = ctx.measureText(testLine).width;
+
+        if (testWidth > lineWidth - SAFE_MARGIN && line.length > 0) {
+          ctx.fillText(line, lineX, currentY);
+          currentY += lineHeight;
+          line = chars[i];
+          lineX = CONTENT_START_X;
+          lineWidth = textAreaWidth;
+        } else {
+          line = testLine;
+        }
+      }
+      if (line) {
+        ctx.fillText(line, lineX, currentY);
+        currentY += lineHeight;
+      }
+
+      // 分隔线
+      const dividerY = currentY + 24;
+      const dividerWidth = textAreaWidth * 0.618;
+      const dividerStartX = width - CONTENT_START_X - dividerWidth;
+      ctx.strokeStyle = '#d4a04a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(dividerStartX, dividerY);
+      ctx.lineTo(width - CONTENT_START_X, dividerY);
+      ctx.stroke();
+
+      // 右对齐基准线（红线）- 分隔线的右端点
+      const rightEdge = width - CONTENT_START_X;
+
+      ctx.fillStyle = '#d4a04a';
+
+      // ---- 书名《书名》----
+      // 使用 actualBoundingBoxRight 测量墨迹宽度，确保右对齐精确
+      const bracketFont = '26px system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+      const titleFont   = 'italic 26px "Caveat", cursive, system-ui';
+      const titleY = dividerY + 32;
+
+      // 测量各段的墨迹右边界（相对于绘制起点）
+      ctx.font = bracketFont;
+      const openBracketInkRight = ctx.measureText('《').actualBoundingBoxRight;
+      const closeBracketInkRight = ctx.measureText('》').actualBoundingBoxRight;
+
+      ctx.font = titleFont;
+      const titleInkRight = ctx.measureText(bookTitle).actualBoundingBoxRight;
+
+      // 计算总墨迹宽度
+      const totalInkWidth = openBracketInkRight + titleInkRight + closeBracketInkRight;
+
+      // 让整体墨迹右边缘 = rightEdge，倒推绘制起点
+      const openX = rightEdge - totalInkWidth;
+      const titleX = openX + openBracketInkRight;
+      const closeX = titleX + titleInkRight;
+
+      // 绘制《
+      ctx.font = bracketFont;
+      ctx.fillText('《', openX, titleY);
+
+      // 绘制书名
+      ctx.font = titleFont;
+      ctx.fillText(bookTitle, titleX, titleY);
+
+      // 绘制》
+      ctx.font = bracketFont;
+      ctx.fillText('》', closeX, titleY);
+
+      // ---- 作者 ----
+      const authorFont = 'italic 22px "Caveat", cursive, system-ui';
+      const authorY = titleY + 26 + 14;
+      ctx.font = authorFont;
+      // 使用 actualBoundingBoxRight 对齐墨迹右边缘
+      const authorInkRight = ctx.measureText(author).actualBoundingBoxRight;
+      ctx.fillText(author, rightEdge - authorInkRight, authorY);
+    }
+
+    // 渲染所有预览 - 使用真实文字
+    const testCases = [
+      {
+        id: 'current-vertical',
+        width: 800,
+        height: 520,
+        quote: "人生最大的敌人是自己。战胜自己，才能成就未来。",
+        bookTitle: "论语",
+        author: "孔子"
+      },
+      {
+        id: 'current-horizontal',
+        width: 1000,
+        height: 420,
+        quote: "读书破万卷，下笔如有神。多读书，读好书，才能写出好文章。",
+        bookTitle: "杜甫诗集",
+        author: "杜甫"
+      },
+      {
+        id: 'new-compact-vertical',
+        width: 500,
+        height: 667,
+        quote: "学而时习之，不亦说乎。",
+        bookTitle: "论语",
+        author: "孔子"
+      },
+      {
+        id: 'new-standard-square',
+        width: 700,
+        height: 700,
+        quote: "知行合一，致良知。心即理也，天下无心外之物。",
+        bookTitle: "传习录",
+        author: "王阳明"
+      },
+      {
+        id: 'new-large-horizontal',
+        width: 900,
+        height: 675,
+        quote: "故天将降大任于斯人也，必先苦其心志，劳其筋骨，饿其体肤，空乏其身，行拂乱其所为，所以动心忍性，曾益其所不能。",
+        bookTitle: "孟子",
+        author: "孟子"
+      },
+      {
+        id: 'new-auto-short',
+        width: 500,
+        height: 667,
+        quote: "温故而知新。",
+        bookTitle: "论语",
+        author: "孔子"
+      },
+      {
+        id: 'new-auto-medium',
+        width: 700,
+        height: 700,
+        quote: "三人行，必有我师焉。择其善者而从之，其不善者而改之。",
+        bookTitle: "论语",
+        author: "孔子"
+      },
+      {
+        id: 'new-auto-long',
+        width: 900,
+        height: 675,
+        quote: "大学之道，在明明德，在亲民，在止于至善。知止而后有定，定而后能静，静而后能安，安而后能虑，虑而后能得。物有本末，事有终始。知所先后，则近道矣。",
+        bookTitle: "大学",
+        author: "曾子"
+      },
+    ];
+
+    testCases.forEach(tc => {
+      renderCard(tc.id, tc.width, tc.height, tc.quote, tc.bookTitle, tc.author);
+    });
+  </script>
+</body>
+</html>

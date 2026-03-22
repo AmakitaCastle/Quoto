@@ -12,7 +12,7 @@ import { useEffect, useRef } from 'react';
 import { CardData } from '@/types';
 import { STYLES } from './StylePicker.data';
 import { renderCardToCanvas } from '@/utils/cardRenderer';
-import { getCanvasDimensions } from '@/utils/cardSizeCalculator';
+import { getCanvasDimensionsV2 } from '@/utils/cardSizeCalculator';
 
 /** 卡片画布组件的属性 */
 interface CardCanvasProps {
@@ -47,8 +47,8 @@ export function CardCanvas({ data }: CardCanvasProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // 根据内容和方向计算画布尺寸
-    const dimensions = getCanvasDimensions(ctx, data);
+    // 根据宽高比计算画布尺寸（使用 Standard 700px 作为基准宽度）
+    const dimensions = getCanvasDimensionsV2(ctx, data, 700);
     canvas.width = dimensions.width;
     canvas.height = dimensions.height;
 
