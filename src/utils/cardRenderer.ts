@@ -158,15 +158,18 @@ export function renderCardToCanvas(
   ctx.stroke();
 
   // ── 书名（手写斜体，右对齐，自动添加书名号）──────────────────────────────
+  // 计算书名整体宽度，用于作者右对齐
+  let titleRightEdge = width - CONTENT_START_X;  // 默认右边缘
+
   if (data.bookTitle?.trim()) {
     ctx.fillStyle = style.accentColor;
 
-    // 书名号使用中文字体，确保正确渲染
+    // 测量书名号宽度（使用中文字体）
     ctx.font = `${BOOK_TITLE_SIZE}px "PingFang SC", "Microsoft YaHei", sans-serif`;
     const openBracketW = ctx.measureText('《').width;
     const closeBracketW = ctx.measureText('》').width;
 
-    // 书名使用手写字体
+    // 测量书名宽度（使用手写字体）
     ctx.font = HANDWRITING_FONT(BOOK_TITLE_SIZE, data.handwritingFont);
     const titleW = ctx.measureText(data.bookTitle).width;
 
@@ -183,16 +186,21 @@ export function renderCardToCanvas(
     ctx.fillText(data.bookTitle, titleBaseX + openBracketW, titleY);
     ctx.font = `${BOOK_TITLE_SIZE}px "PingFang SC", "Microsoft YaHei", sans-serif`;
     ctx.fillText('》', titleBaseX + openBracketW + titleW, titleY);
+
+    // 更新书名右边缘位置（》的右侧）
+    titleRightEdge = titleBaseX + openBracketW + titleW + closeBracketW;
   }
 
-  // ── 作者（手写斜体，右对齐）──────────────────────────────────────────────
+  // ── 作者（手写斜体，右对齐：与书名号》的右边缘视觉对齐）────────────────────
   if (data.author?.trim()) {
     ctx.fillStyle = style.accentColor;
+    // 使用手写字体测量并绘制
     ctx.font = HANDWRITING_FONT(AUTHOR_SIZE, data.handwritingFont);
     const authorW = ctx.measureText(data.author).width;
+    // 作者右边缘对齐到书名号》的右边缘
     ctx.fillText(
       data.author,
-      width - CONTENT_START_X - authorW,
+      titleRightEdge - authorW,
       dividerY + DIVIDER_TO_TITLE_GAP + BOOK_TITLE_SIZE + TITLE_TO_AUTHOR_GAP
     );
   }
