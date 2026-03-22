@@ -7,7 +7,7 @@
  * @package src/utils
  */
 
-import { CardData, CardStyle } from '@/types';
+import { BackgroundConfig, CardData, CardStyle } from '@/types';
 import {
   getQuotes,
   LINE_HEIGHT_MULTIPLIER,
@@ -27,6 +27,232 @@ import {
 // ============================================================================
 // 辅助函数
 // ============================================================================
+
+/**
+ * 绘制背景配置
+ */
+function drawBackground(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  config: BackgroundConfig
+): void {
+  // 绘制主色渐变
+  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  config.colors.forEach((color, i) => {
+    const offset = i / (config.colors.length - 1);
+    gradient.addColorStop(offset, color);
+  });
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  // 根据 pattern 添加装饰元素
+  if (config.pattern === 'stars') {
+    drawStars(ctx, width, height);
+  } else if (config.pattern === 'geometric') {
+    drawGeometric(ctx, width, height, config.colors);
+  } else if (config.pattern === 'sparkle') {
+    drawSparkle(ctx, width, height, config.colors);
+  }
+
+  // 绘制遮罩层
+  const maskGradient = ctx.createLinearGradient(0, 0, 0, height);
+  maskGradient.addColorStop(0, `rgba(0, 0, 0, ${config.maskOpacity + 0.05})`);
+  maskGradient.addColorStop(0.3, `rgba(0, 0, 0, ${config.maskOpacity - 0.15})`);
+  maskGradient.addColorStop(1, `rgba(0, 0, 0, ${config.maskOpacity})`);
+
+  ctx.fillStyle = maskGradient;
+  ctx.fillRect(0, 0, width, height);
+}
+
+/**
+ * 绘制星空元素
+ */
+function drawStars(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number
+): void {
+  const textArea = { x: 40, y: 60, w: 280, h: 200 };
+
+  for (let i = 0; i < 50; i++) {
+    let x: number, y: number;
+
+    // 避开文字区域
+    do {
+      x = Math.random() * width;
+      y = Math.random() * height;
+    } while (
+      x >= textArea.x && x <= textArea.x + textArea.w &&
+      y >= textArea.y && y <= textArea.y + textArea.h
+    );
+
+    const size = Math.random() * 2 + 0.5;
+    const brightness = Math.random() * 0.5 + 0.5;
+
+    // 光晕
+    const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+    glowGradient.addColorStop(0, `rgba(255, 255, 255, ${brightness * 0.6})`);
+    glowGradient.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = glowGradient;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+/**
+ * 绘制几何图案
+ */
+function drawGeometric(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  colors: string[]
+): void {
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+
+  for (let i = 0; i < 30; i++) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const size = Math.random() * 40 + 15;
+
+    ctx.strokeStyle = colors[Math.floor(Math.random() * colors.length)];
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, size, size);
+  }
+
+  ctx.restore();
+}
+
+/**
+ * 绘制闪烁效果
+ */
+function drawSparkle(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  colors: string[]
+): void {
+  for (let i = 0; i < 40; i++) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const size = Math.random() * 4 + 2;
+
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, size * 2);
+    gradient.addColorStop(0, colors[colors.length - 1] + '80');
+    gradient.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+/**
+ * 绘制中式纹理
+ */
+function drawTexture(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  colors: string[],
+  _textureName?: string
+): void {
+  // 底色渐变
+  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  colors.forEach((color, i) => {
+    gradient.addColorStop(i / (colors.length - 1), color);
+  });
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  // 噪点纹理
+  for (let i = 0; i < 5000; i++) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const alpha = 0.02 + Math.random() * 0.03;
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.fillRect(x, y, 2, 1);
+  }
+
+  // 四角云纹装饰
+  ctx.strokeStyle = 'rgba(160, 140, 100, 0.3)';
+  ctx.lineWidth = 1;
+  const cloudPatterns = [
+    { x: 30, y: 30, r: 20 },
+    { x: width - 30, y: 30, r: 15 },
+    { x: 30, y: height - 30, r: 15 },
+    { x: width - 30, y: height - 30, r: 20 },
+  ];
+
+  cloudPatterns.forEach(pattern => {
+    ctx.beginPath();
+    ctx.arc(pattern.x, pattern.y, pattern.r, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+}
+
+/**
+ * 用 actualBoundingBoxRight 让文字墨迹右边缘精确对齐到 rightEdge，
+ * 避免中文标点 side-bearing 造成的视觉偏移。
+ */
+function fillTextAlignRight(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  rightEdge: number,
+  y: number
+): void {
+  const metrics = ctx.measureText(text);
+  const inkRight = metrics.actualBoundingBoxRight ?? metrics.width;
+  ctx.fillText(text, rightEdge - inkRight, y);
+}
+
+/**
+ * 贪心折行，返回 string[]。
+ * 不做首行缩进——调用方统一左对齐，视觉更整洁。
+ */
+function buildLines(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string[] {
+  const chars = text.split('');
+  const lines: string[] = [];
+  let line = '';
+
+  for (const ch of chars) {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line.length > 0) {
+      lines.push(line);
+      line = ch;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+/**
+ * 孤行修复：若最后一行字数 <= orphanThreshold，
+ * 把倒数第二行的最后一个字移到最后一行，消除孤行。
+ */
+function fixOrphan(lines: string[], orphanThreshold = 2): string[] {
+  if (lines.length < 2) return lines;
+  const last = lines[lines.length - 1];
+  if (last.length <= orphanThreshold) {
+    const prev = lines[lines.length - 2];
+    // 把倒数第二行最后一字移过来
+    lines[lines.length - 2] = prev.slice(0, -1);
+    lines[lines.length - 1] = prev.slice(-1) + last;
+  }
+  return lines;
+}
 
 /**
  * 解析 CSS 渐变字符串并创建 Canvas 渐变对象
@@ -64,11 +290,10 @@ function parseGradient(
  * 绘制顺序：
  * 1. 圆角背景（使用 clip() 确保渐变被正确裁剪）
  * 2. 开引号
- * 3. 正文（自动换行，按句号分段）
- * 4. 闭引号
- * 5. 分隔线（黄金比例宽度，右对齐）
- * 6. 书名（带书名号，手写字体，右对齐）
- * 7. 作者（手写字体，右对齐）
+ * 3. 正文（自动换行，贪心算法 + 孤行修复）
+ * 4. 分隔线（黄金比例宽度，右对齐）
+ * 5. 书名（带书名号，手写字体，右对齐）
+ * 6. 作者（手写字体，右对齐，使用 actualBoundingBoxRight 精确对齐）
  *
  * @param canvas - HTML Canvas 元素
  * @param data - 卡片数据（书摘、书名、作者等）
@@ -82,6 +307,7 @@ export function renderCardToCanvas(
   style: CardStyle,
   quoteStartY: number,
   openQuoteY: number,
+  backgroundConfig?: BackgroundConfig,
 ): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -108,13 +334,23 @@ export function renderCardToCanvas(
   ctx.closePath();
   ctx.clip();
 
-  // 应用渐变背景
-  const gradient = parseGradient(style.background, ctx, height);
-  ctx.fillStyle = gradient ?? style.background;
-  ctx.fillRect(0, 0, width, height);
+  // 使用背景配置或默认渐变
+  if (backgroundConfig) {
+    if (backgroundConfig.type === 'texture') {
+      drawTexture(ctx, width, height, backgroundConfig.colors, backgroundConfig.textureName);
+    } else {
+      drawBackground(ctx, width, height, backgroundConfig);
+    }
+  } else {
+    const gradient = parseGradient(style.background, ctx, height);
+    ctx.fillStyle = gradient ?? style.background;
+    ctx.fillRect(0, 0, width, height);
+  }
+
   ctx.restore();
 
   const textAreaWidth = width - 2 * CONTENT_START_X - SAFE_MARGIN;
+  const rightEdge = width - CONTENT_START_X;
   let quoteEndY = quoteStartY;
 
   if (data.quote.trim()) {
@@ -125,24 +361,19 @@ export function renderCardToCanvas(
     ctx.font = BODY_FONT(OPENING_QUOTE_SIZE, data.fontFamily);
     ctx.fillText(quotes.open, CONTENT_START_X, openQuoteY);
 
-    // ── 正文 ────────────────────────────────────────────────────────────────
+    // ── 正文（使用贪心折行 + 孤行修复）───────────────────────────────────────
     ctx.fillStyle = style.textColor;
     ctx.font = BODY_FONT(FONT_SIZE, data.fontFamily);
-    quoteEndY = wrapText(
-      ctx,
-      data.quote,
-      CONTENT_START_X,
-      quoteStartY,
-      textAreaWidth,
-      FONT_SIZE,
-      data.fontFamily,
-      FONT_SIZE * 2
-    );
 
-    // ── 闭引号 ──────────────────────────────────────────────────────────────
-    ctx.fillStyle = style.quoteColor ?? style.accentColor;
-    ctx.font = BODY_FONT(OPENING_QUOTE_SIZE * 0.75, data.fontFamily);
-    ctx.fillText(quotes.close, CONTENT_START_X, quoteEndY + OPENING_QUOTE_SIZE * 0.5);
+    const lines = buildLines(ctx, data.quote, textAreaWidth);
+    const fixedLines = fixOrphan(lines);
+    const lineHeight = FONT_SIZE * LINE_HEIGHT_MULTIPLIER;
+
+    fixedLines.forEach((line, i) => {
+      ctx.fillText(line, CONTENT_START_X, quoteStartY + i * lineHeight);
+    });
+
+    quoteEndY = quoteStartY + (fixedLines.length - 1) * lineHeight;
   }
 
   // ── 分隔线（黄金比例宽度，右对齐）────────────────────────────────────────
@@ -158,126 +389,60 @@ export function renderCardToCanvas(
   ctx.stroke();
 
   // ── 书名（手写斜体，右对齐，自动添加书名号）──────────────────────────────
-  // 计算书名整体宽度，用于作者右对齐
-  let titleRightEdge = width - CONTENT_START_X;  // 默认右边缘
+  // 使用 actualBoundingBoxRight 实现精确的右边缘对齐
+  const titleY = dividerY + DIVIDER_TO_TITLE_GAP;
 
   if (data.bookTitle?.trim()) {
     ctx.fillStyle = style.accentColor;
 
-    // 测量书名号宽度（使用中文字体）
-    ctx.font = `${BOOK_TITLE_SIZE}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-    const openBracketW = ctx.measureText('《').width;
-    const closeBracketW = ctx.measureText('》').width;
+    // 书名号使用中文正文字体
+    const bracketFont = `${BOOK_TITLE_SIZE}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+    // 书名使用手写字体
+    const titleFont = HANDWRITING_FONT(BOOK_TITLE_SIZE, data.handwritingFont);
 
-    // 测量书名宽度（使用手写字体）
-    ctx.font = HANDWRITING_FONT(BOOK_TITLE_SIZE, data.handwritingFont);
+    // 测量书名号《》宽度（使用 bracketFont）
+    ctx.font = bracketFont;
+    const openBracketW = ctx.measureText('《').width;
+
+    // 测量书名宽度（使用 titleFont）
+    ctx.font = titleFont;
     const titleW = ctx.measureText(data.bookTitle).width;
 
-    const totalTitleW = openBracketW + titleW + closeBracketW;
+    // 计算书名整体宽度（《 + 书名 + 》）
+    // 注意：》使用 actualBoundingBoxRight 来精确测量墨迹右边缘
+    ctx.font = bracketFont;
+    const closeBracketMetrics = ctx.measureText('》');
+    const closeBracketInkRight = closeBracketMetrics.actualBoundingBoxRight ?? closeBracketMetrics.width;
 
-    // 整体右边缘对齐到 width - CONTENT_START_X
-    const titleBaseX = width - CONTENT_START_X - totalTitleW;
-    const titleY = dividerY + DIVIDER_TO_TITLE_GAP;
+    const totalTitleW = openBracketW + titleW + closeBracketInkRight;
 
-    // 绘制《书名》
-    ctx.font = `${BOOK_TITLE_SIZE}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+    // 整体右边缘对齐到 rightEdge
+    const titleBaseX = rightEdge - totalTitleW;
+
+    // 绘制《
+    ctx.font = bracketFont;
     ctx.fillText('《', titleBaseX, titleY);
-    ctx.font = HANDWRITING_FONT(BOOK_TITLE_SIZE, data.handwritingFont);
-    ctx.fillText(data.bookTitle, titleBaseX + openBracketW, titleY);
-    ctx.font = `${BOOK_TITLE_SIZE}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-    ctx.fillText('》', titleBaseX + openBracketW + titleW, titleY);
 
-    // 更新书名右边缘位置（》的右侧）
-    titleRightEdge = titleBaseX + openBracketW + titleW + closeBracketW;
+    // 绘制书名
+    ctx.font = titleFont;
+    ctx.fillText(data.bookTitle, titleBaseX + openBracketW, titleY);
+
+    // 绘制》（使用 fillTextAlignRight 确保精确右对齐）
+    ctx.font = bracketFont;
+    const closeX = titleBaseX + openBracketW + titleW;
+    // 》的右边缘应该对齐到 titleBaseX + openBracketW + titleW + closeBracketInkRight
+    // 所以我们用 fillTextAlignRight 从 closeX + closeBracketInkRight 的位置开始
+    fillTextAlignRight(ctx, '》', closeX + closeBracketInkRight, titleY);
   }
 
   // ── 作者（手写斜体，右对齐：与书名号》的右边缘视觉对齐）────────────────────
   if (data.author?.trim()) {
     ctx.fillStyle = style.accentColor;
-    // 使用手写字体测量并绘制
     ctx.font = HANDWRITING_FONT(AUTHOR_SIZE, data.handwritingFont);
-    const authorW = ctx.measureText(data.author).width;
-    // 作者右边缘对齐到书名号》的右边缘
-    ctx.fillText(
-      data.author,
-      titleRightEdge - authorW,
-      dividerY + DIVIDER_TO_TITLE_GAP + BOOK_TITLE_SIZE + TITLE_TO_AUTHOR_GAP
-    );
+
+    const authorY = dividerY + DIVIDER_TO_TITLE_GAP + BOOK_TITLE_SIZE + TITLE_TO_AUTHOR_GAP;
+
+    // 使用 fillTextAlignRight 实现精确的右边缘对齐
+    fillTextAlignRight(ctx, data.author, rightEdge, authorY);
   }
-}
-
-// ============================================================================
-// 文本处理函数
-// ============================================================================
-
-/**
- * 自动换行文本渲染
- *
- * 按句号（.）分段，每段首行缩进 2 个字符宽度。
- * 当文本超过最大宽度时自动换行。
- *
- * @param ctx - Canvas 2D 上下文
- * @param text - 要渲染的文本
- * @param x - 起始 X 坐标
- * @param y - 起始 Y 坐标
- * @param maxWidth - 最大可用宽度
- * @param fontSize - 字号
- * @param fontFamily - 自定义字体族（可选）
- * @param indent - 首行缩进量，默认 2 倍字号
- * @returns 文本结束时的 Y 坐标
- */
-function wrapText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  maxWidth: number,
-  fontSize: number,
-  fontFamily?: string,
-  indent: number = fontSize * 2
-): number {
-  const lineHeight = fontSize * LINE_HEIGHT_MULTIPLIER;
-  const PERIOD = '。';
-  const segments = text.split(PERIOD).filter(s => s.trim());
-  let currentY = y;
-
-  ctx.font = BODY_FONT(fontSize, fontFamily);
-
-  for (const segment of segments) {
-    const firstLineX = x + indent;
-    const firstLineWidth = maxWidth - indent;
-    const restLineX = x;
-    const restLineWidth = maxWidth;
-
-    const chars = segment.split('');
-    let line = '';
-    let lineX = firstLineX;
-    let lineWidth = firstLineWidth;
-
-    // 逐字累加，超过宽度就换行
-    for (let i = 0; i < chars.length; i++) {
-      const testLine = line + chars[i];
-      const testWidth = ctx.measureText(testLine).width;
-
-      if (testWidth > lineWidth - SAFE_MARGIN && line.length > 0) {
-        ctx.fillText(line, lineX, currentY);
-        currentY += lineHeight;
-        line = chars[i];
-        lineX = restLineX;
-        lineWidth = restLineWidth;
-      } else {
-        line = testLine;
-      }
-    }
-
-    // 渲染最后一段
-    if (line) {
-      ctx.fillText(line, lineX, currentY);
-      const lastLineW = ctx.measureText(line).width;
-      ctx.fillText(PERIOD, lineX + lastLineW, currentY);
-      currentY += lineHeight;
-    }
-  }
-
-  return currentY;
 }
