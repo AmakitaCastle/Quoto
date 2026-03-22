@@ -157,78 +157,53 @@ export interface FontConfig {
 }
 
 /**
- * 背景配置接口
+ * 背景配置接口（v3 模糊背景方案）
  *
  * 用于书籍封面背景系统的配置
  */
 export interface BackgroundConfig {
   /** 背景类型 */
   type: 'cover' | 'gradient';
-  /** 主色数组（3-5 个颜色） */
+  /** 主色数组（K-Means 5 个主色，按饱和度降序） */
   colors: string[];
-  /** 视觉元素类型 */
-  pattern: PatternType;
+  /** 纹理复杂度 (0-1) */
+  textureScore: number;
+  /** 亮点位置数组 */
+  brightSpots: BrightSpot[];
+  /** 平均亮度 (0-1) */
+  avgLum: number;
   /** 上传的图片 URL（仅 cover 类型） */
   imageUrl?: string;
-  /** 遮罩不透明度 (0.6-0.7) */
-  maskOpacity: number;
 }
 
 /**
- * 视觉元素类型
+ * 亮点数据
  *
- * 用于识别封面特征并生成对应的背景效果
+ * 用于存储封面高亮区域的位置和亮度
  */
-export type PatternType =
-  | 'stars'      // 星空元素（如小王子）
-  | 'texture'    // 纸质纹理（如红楼梦）
-  | 'geometric'  // 几何图案（如 1984）
-  | 'sparkle'    // 闪烁效果（如绿野仙踪）
-  | 'minimal'    // 极简风格（如白夜行）
-  | 'edges';     // 边缘检测纹理（新增）
-
-/**
- * 边缘路径数据
- *
- * 用于存储从封面图片提取的边缘轮廓
- */
-export interface PathData {
-  /** 路径点数组 */
-  points: { x: number; y: number }[];
-  /** 是否为闭合路径 */
-  closed: boolean;
+export interface BrightSpot {
+  /** 归一化 X 坐标 (0-1) */
+  x: number;
+  /** 归一化 Y 坐标 (0-1) */
+  y: number;
+  /** 亮度值 (0-1) */
+  v: number;
 }
 
 /**
- * 边缘数据类型
+ * 蒙版三段停止点
  *
- * 存储从封面图片提取的边缘信息和纹理类型
+ * 用于控制渐变蒙版的上/中/下不透明度
  */
-export interface EdgeData {
-  /** 纹理类型 */
-  type: 'lines' | 'curves' | 'dots' | 'noise';
-  /** 边缘强度 (0-1) */
-  intensity: number;
-  /** 边缘路径数组 */
-  paths: PathData[];
+export interface MaskStops {
+  top: number;
+  middle: number;
+  bottom: number;
 }
 
 /**
- * 背景配置接口（扩展支持边缘数据）
+ * 封面适配模式
  *
- * 用于书籍封面背景系统的配置
+ * 用于根据封面特征调整渲染参数
  */
-export interface BackgroundConfig {
-  /** 背景类型 */
-  type: 'cover' | 'gradient';
-  /** 主色数组（3-5 个颜色） */
-  colors: string[];
-  /** 视觉元素类型 */
-  pattern: PatternType;
-  /** 上传的图片 URL（仅 cover 类型） */
-  imageUrl?: string;
-  /** 边缘数据（新增） */
-  edges?: EdgeData;
-  /** 遮罩不透明度 (0.6-0.7) */
-  maskOpacity: number;
-}
+export type CoverMode = 'normal' | 'too-bright' | 'too-plain';
