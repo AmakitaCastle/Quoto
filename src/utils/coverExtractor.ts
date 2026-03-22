@@ -5,7 +5,7 @@
  * 支持两级降级：上传图片 → 默认渐变
  */
 
-import { BackgroundConfig, PatternType } from '@/types';
+import { BackgroundConfig, PatternType, PathData } from '@/types';
 
 /**
  * RGB 转 Hex
@@ -157,4 +157,236 @@ export async function loadBackgroundFromUpload(imageDataUrl: string): Promise<Ba
  */
 export async function loadBackgroundConfig(): Promise<BackgroundConfig> {
   return getDefaultGradient();
+}
+
+/**
+ * 使用 Sobel 算子计算边缘强度
+ *
+ * @param imageData - Canvas ImageData
+ * @returns Float32Array 边缘强度图（归一化到 0-1）
+ */
+export function computeSobel(imageData: ImageData): Float32Array {
+  const { width, height, data } = imageData;
+  const edges = new Float32Array(width * height);
+
+  // Sobel 算子
+  const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+  const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+
+  let maxEdge = 0;
+
+  // 计算边缘强度
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      let gx = 0, gy = 0;
+      let k = 0;
+
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const i = ((y + dy) * width + (x + dx)) * 4;
+          // 转灰度
+          const gray = data[i] * 0.3 + data[i + 1] * 0.59 + data[i + 2] * 0.11;
+          gx += gray * sobelX[k];
+          gy += gray * sobelY[k];
+          k++;
+        }
+      }
+
+      const magnitude = Math.sqrt(gx * gx + gy * gy);
+      edges[y * width + x] = magnitude;
+      if (magnitude > maxEdge) maxEdge = magnitude;
+    }
+  }
+
+  // 归一化到 0-1
+  const normalized = new Float32Array(width * height);
+  for (let i = 0; i < normalized.length; i++) {
+    normalized[i] = edges[i] / maxEdge;
+  }
+
+  return normalized;
+}
+
+/**
+ * 计算自适应阈值（Otsu 方法简化版）
+ *
+ * @param edges - 边缘强度图
+ * @returns 最佳阈值 (0-1)
+ */
+export function computeAdaptiveThreshold(edges: Float32Array): number {
+  // 计算直方图
+  const histogram = new Array(256).fill(0);
+  for (let i = 0; i < edges.length; i++) {
+    const bin = Math.floor(edges[i] * 255);
+    histogram[bin]++;
+  }
+
+  // Otsu 方法
+  const total = edges.length;
+  let sum = 0;
+  for (let i = 0; i < 256; i++) {
+    sum += i * histogram[i];
+  }
+
+  let sumB = 0;
+  let wB = 0;
+  let maxVariance = 0;
+  let threshold = 0;
+
+  for (let i = 0; i < 256; i++) {
+    wB += histogram[i];
+    if (wB === 0) continue;
+
+    const wF = total - wB;
+    if (wF === 0) break;
+
+    sumB += i * histogram[i];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const variance = wB * wF * (mB - mF) * (mB - mF);
+
+    if (variance > maxVariance) {
+      maxVariance = variance;
+      threshold = i;
+    }
+  }
+
+  return threshold / 255;
+}
+
+/**
+ * 从边缘图提取路径
+ *
+ * @param edges - 边缘强度图
+ * @param threshold - 二值化阈值
+ * @param width - 图片宽度
+ * @param height - 图片高度
+ * @returns PathData[] 路径数组
+ */
+export function extractPaths(
+  edges: Float32Array,
+  threshold: number,
+  width: number,
+  height: number
+): PathData[] {
+  const visited = new Uint8Array(width * height);
+  const paths: PathData[] = [];
+
+  // 二值化
+  const binary = new Uint8Array(width * height);
+  for (let i = 0; i < edges.length; i++) {
+    binary[i] = edges[i] >= threshold ? 1 : 0;
+  }
+
+  // 查找轮廓
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = y * width + x;
+      if (binary[i] && !visited[i]) {
+        const path = traceContour(binary, visited, x, y, width, height);
+        if (path.length > 3) {
+          paths.push({ points: path, closed: true });
+        }
+      }
+    }
+  }
+
+  return paths;
+}
+
+/**
+ * 追踪轮廓（8 邻域）
+ */
+function traceContour(
+  binary: Uint8Array,
+  visited: Uint8Array,
+  startX: number,
+  startY: number,
+  width: number,
+  height: number
+): { x: number; y: number }[] {
+  const points: { x: number; y: number }[] = [];
+  const directions = [
+    { dx: 1, dy: 0 },   // 右
+    { dx: 1, dy: 1 },   // 右下
+    { dx: 0, dy: 1 },   // 下
+    { dx: -1, dy: 1 },  // 左下
+    { dx: -1, dy: 0 },  // 左
+    { dx: -1, dy: -1 }, // 左上
+    { dx: 0, dy: -1 },  // 上
+    { dx: 1, dy: -1 },  // 右上
+  ];
+
+  let x = startX, y = startY;
+  let dirIndex = 0;
+
+  do {
+    points.push({ x, y });
+    visited[y * width + x] = 1;
+
+    // 查找下一个边缘点
+    let found = false;
+    for (let i = 0; i < 8; i++) {
+      const nextDir = (dirIndex + i) % 8;
+      const nx = x + directions[nextDir].dx;
+      const ny = y + directions[nextDir].dy;
+      const ni = ny * width + nx;
+
+      if (nx >= 0 && nx < width && ny >= 0 && ny < height &&
+          binary[ni] && !visited[ni]) {
+        x = nx;
+        y = ny;
+        dirIndex = (nextDir + 4) % 8;  // 逆时针搜索
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) break;
+  } while ((x !== startX || y !== startY) && points.length < 500);
+
+  return points;
+}
+
+/**
+ * 根据路径特征分类边缘类型
+ *
+ * @param paths - 路径数组
+ * @returns 纹理类型
+ */
+export function classifyEdgeType(paths: PathData[]): 'lines' | 'curves' | 'dots' | 'noise' {
+  if (paths.length === 0) return 'noise';
+
+  // 计算路径的平均长度和曲率
+  let totalLength = 0;
+  let curvature = 0;
+
+  paths.forEach(path => {
+    for (let i = 1; i < path.points.length; i++) {
+      const dx = path.points[i].x - path.points[i - 1].x;
+      const dy = path.points[i].y - path.points[i - 1].y;
+      totalLength += Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // 简单曲率估计：起点到终点距离与路径长度的比值
+    if (path.points.length > 2) {
+      const first = path.points[0];
+      const last = path.points[path.points.length - 1];
+      const directDist = Math.sqrt(
+        Math.pow(last.x - first.x, 2) + Math.pow(last.y - first.y, 2)
+      );
+      if (totalLength > 0) {
+        curvature += directDist / totalLength;
+      }
+    }
+  });
+
+  const avgLength = totalLength / paths.length;
+  const avgCurvature = curvature / paths.length;
+
+  // 分类规则
+  if (avgLength < 5) return 'dots';          // 短路径 → 点状
+  if (avgCurvature > 0.8) return 'lines';    // 高曲率 → 直线
+  if (avgCurvature > 0.5) return 'curves';   // 中等曲率 → 曲线
+  return 'noise';                            // 其他 → 噪点
 }
