@@ -290,7 +290,13 @@ export function extractPaths(
     }
   }
 
-  return paths;
+  // 对每个路径应用 Douglas-Peucker 简化
+  const simplifiedPaths = paths.map(path => ({
+    points: simplifyPath(path.points, 2),  // epsilon = 2
+    closed: path.closed
+  })).filter(path => path.points.length > 2);  // 过滤掉过度简化的路径
+
+  return simplifiedPaths;
 }
 
 /**
@@ -345,6 +351,65 @@ function traceContour(
   } while ((x !== startX || y !== startY) && points.length < 500);
 
   return points;
+}
+
+/**
+ * Douglas-Peucker 路径简化算法
+ *
+ * @param points - 原始路径点
+ * @param epsilon - 简化阈值（越小越精确）
+ * @returns 简化后的路径点
+ */
+function simplifyPath(
+  points: { x: number; y: number }[],
+  epsilon: number = 2
+): { x: number; y: number }[] {
+  if (points.length < 3) return points;
+
+  // 找到距离基线最远的点
+  let maxDist = 0;
+  let maxIndex = 0;
+  const first = points[0];
+  const last = points[points.length - 1];
+
+  for (let i = 1; i < points.length - 1; i++) {
+    const dist = perpendicularDistance(points[i], first, last);
+    if (dist > maxDist) {
+      maxDist = dist;
+      maxIndex = i;
+    }
+  }
+
+  // 如果最大距离大于阈值，递归简化
+  if (maxDist > epsilon) {
+    const left = simplifyPath(points.slice(0, maxIndex + 1), epsilon);
+    const right = simplifyPath(points.slice(maxIndex), epsilon);
+    return [...left.slice(0, -1), ...right];
+  } else {
+    return [first, last];
+  }
+}
+
+/**
+ * 计算点到直线的垂直距离
+ */
+function perpendicularDistance(
+  point: { x: number; y: number },
+  lineStart: { x: number; y: number },
+  lineEnd: { x: number; y: number }
+): number {
+  const dx = lineEnd.x - lineStart.x;
+  const dy = lineEnd.y - lineStart.y;
+
+  if (dx === 0 && dy === 0) {
+    return Math.sqrt(
+      Math.pow(point.x - lineStart.x, 2) + Math.pow(point.y - lineStart.y, 2)
+    );
+  }
+
+  return Math.abs(
+    dy * point.x - dx * point.y + lineStart.x * lineStart.y - lineStart.y * lineStart.x
+  ) / Math.sqrt(dx * dx + dy * dy);
 }
 
 /**
