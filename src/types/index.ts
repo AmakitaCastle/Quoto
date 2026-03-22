@@ -184,4 +184,51 @@ export type PatternType =
   | 'texture'    // 纸质纹理（如红楼梦）
   | 'geometric'  // 几何图案（如 1984）
   | 'sparkle'    // 闪烁效果（如绿野仙踪）
-  | 'minimal';  // 极简风格（如白夜行）
+  | 'minimal'    // 极简风格（如白夜行）
+  | 'edges';     // 边缘检测纹理（新增）
+
+/**
+ * 边缘路径数据
+ *
+ * 用于存储从封面图片提取的边缘轮廓
+ */
+export interface PathData {
+  /** 路径点数组 */
+  points: { x: number; y: number }[];
+  /** 是否为闭合路径 */
+  closed: boolean;
+}
+
+/**
+ * 边缘数据类型
+ *
+ * 存储从封面图片提取的边缘信息和纹理类型
+ */
+export interface EdgeData {
+  /** 纹理类型 */
+  type: 'lines' | 'curves' | 'dots' | 'noise';
+  /** 边缘强度 (0-1) */
+  intensity: number;
+  /** 边缘路径数组 */
+  paths: PathData[];
+}
+
+/**
+ * 背景配置接口（扩展支持边缘数据）
+ *
+ * 用于书籍封面背景系统的配置
+ */
+export interface BackgroundConfig {
+  /** 背景类型 */
+  type: 'cover' | 'gradient';
+  /** 主色数组（3-5 个颜色） */
+  colors: string[];
+  /** 视觉元素类型 */
+  pattern: PatternType;
+  /** 上传的图片 URL（仅 cover 类型） */
+  imageUrl?: string;
+  /** 边缘数据（新增） */
+  edges?: EdgeData;
+  /** 遮罩不透明度 (0.6-0.7) */
+  maskOpacity: number;
+}
