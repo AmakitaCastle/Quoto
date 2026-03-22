@@ -23,23 +23,26 @@ export function getBlurRadius(textureScore: number): number {
 }
 
 /**
- * 计算纹理透明度
+ * 计算纹理透明度（方案 A：提高透明度让图片更明显）
+ * 原：0.35 + (1 - textureScore) * 0.25  →  0.50 + (1 - textureScore) * 0.30
  */
 export function getTexAlpha(textureScore: number): number {
-  return 0.35 + (1 - textureScore) * 0.25;
+  return 0.50 + (1 - textureScore) * 0.30;
 }
 
 /**
- * 获取蒙版三段停止点
+ * 获取蒙版三段停止点（方案 A：减轻蒙版重量）
+ * 原 normal: {top: 0.72, middle: 0.58, bottom: 0.45}
+ * 新 normal: {top: 0.55, middle: 0.42, bottom: 0.30}
  */
 export function getMaskStops(mode: CoverMode): MaskStops {
   switch (mode) {
     case 'too-bright':
-      return { top: 0.85, middle: 0.70, bottom: 0.55 };
+      return { top: 0.70, middle: 0.55, bottom: 0.42 };
     case 'too-plain':
-      return { top: 0.68, middle: 0.55, bottom: 0.42 };
+      return { top: 0.52, middle: 0.40, bottom: 0.28 };
     default:
-      return { top: 0.72, middle: 0.58, bottom: 0.45 };
+      return { top: 0.55, middle: 0.42, bottom: 0.30 };
   }
 }
 

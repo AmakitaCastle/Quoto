@@ -83,9 +83,10 @@ function drawBackground(
   const [r, g, b] = hslToRgb(rgbToHsl(hexToRgb(config.colors[0])));
   const [H, S] = rgbToHsl([r, g, b]);
 
-  // Layer 1: 主色深色底渐变
-  const c0 = hslToRgb([H, Math.min(S, 85), 11]);
-  const c1 = hslToRgb([(H + 15) % 360, Math.min(S, 70), 7]);
+  // Layer 1: 主色深色底渐变（方案 A：提高亮度让图片更明显）
+  // 原：11%, 7% → 新：18%, 12%
+  const c0 = hslToRgb([H, Math.min(S, 85), 18]);
+  const c1 = hslToRgb([(H + 15) % 360, Math.min(S, 70), 12]);
   const bg = ctx.createLinearGradient(0, 0, 0, height);
   bg.addColorStop(0, toRgba(c0, 1));
   bg.addColorStop(1, toRgba(c1, 1));
@@ -122,10 +123,11 @@ function drawBackground(
   ctx.fillStyle = mask;
   ctx.fillRect(0, 0, width, height);
 
-  // 四角暗角
+  // 四角暗角（方案 A：减轻暗角重量）
+  // 原：0.42 → 新：0.25
   [[0, 0], [width, 0], [width, height], [0, height]].forEach(([cx, cy]) => {
     const vg = ctx.createRadialGradient(cx, cy, 0, cx, cy, width * 0.62);
-    vg.addColorStop(0, 'rgba(0,0,0,0.42)');
+    vg.addColorStop(0, 'rgba(0,0,0,0.25)');
     vg.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, width, height);
