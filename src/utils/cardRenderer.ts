@@ -7,7 +7,7 @@
  * @package src/utils
  */
 
-import { BackgroundConfig, CardData, CardStyle } from '@/types';
+import { BackgroundConfig, CardData, CardStyle, EdgeData } from '@/types';
 import {
   getQuotes,
   LINE_HEIGHT_MULTIPLIER,
@@ -37,7 +37,7 @@ function drawBackground(
   height: number,
   config: BackgroundConfig
 ): void {
-  // 如果有上传的图片，先绘制图片
+  // 如果有上传的图片，先绘制图片（低不透明度）
   if (config.type === 'cover' && config.imageUrl) {
     drawUploadedImage(ctx, width, height, config.imageUrl);
   }
@@ -51,6 +51,13 @@ function drawBackground(
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
+
+  // 绘制边缘检测纹理（新增）
+  if (config.pattern === 'edges' && config.edges) {
+    // 使用第二个主色作为纹理颜色（通常与背景形成对比）
+    const textureColor = config.colors[1] || config.colors[0];
+    drawEdgeTexture(ctx, width, height, config.edges, textureColor);
+  }
 
   // 根据 pattern 添加装饰元素
   if (config.pattern === 'stars') {
@@ -105,6 +112,54 @@ function drawUploadedImage(
   }
 
   ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+}
+
+/**
+ * 绘制边缘检测纹理
+ *
+ * @param ctx - Canvas 2D 上下文
+ * @param width - 画布宽度
+ * @param height - 画布高度
+ * @param edges - 边缘数据
+ * @param baseColor - 基础颜色（从提取的主色中选择）
+ */
+function drawEdgeTexture(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  edges: EdgeData,
+  baseColor: string
+): void {
+  if (edges.paths.length === 0) return;
+
+  ctx.save();
+  ctx.globalAlpha = 0.2;  // 低不透明度，避免干扰文字
+  ctx.strokeStyle = baseColor;
+  ctx.lineWidth = 1;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // 缩放因子
+  const scaleX = width / 200;
+  const scaleY = height / 280;
+
+  edges.paths.forEach(path => {
+    if (path.points.length < 2) return;
+
+    ctx.beginPath();
+    const start = path.points[0];
+    ctx.moveTo(start.x * scaleX, start.y * scaleY);
+
+    for (let i = 1; i < path.points.length; i++) {
+      const point = path.points[i];
+      ctx.lineTo(point.x * scaleX, point.y * scaleY);
+    }
+
+    if (path.closed) ctx.closePath();
+    ctx.stroke();
+  });
+
+  ctx.restore();
 }
 
 /**
