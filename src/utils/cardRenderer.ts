@@ -1,5 +1,5 @@
 /**
- * 卡片渲染器
+ * 卡片渲染器（v3 模糊背景方案）
  *
  * 核心渲染逻辑：在 HTML5 Canvas 上绘制书摘卡片。
  * 负责绘制背景、引号、正文、分隔线、书名和作者等所有视觉元素。
@@ -7,7 +7,7 @@
  * @package src/utils
  */
 
-import { BackgroundConfig, CardData, CardStyle, EdgeData } from '@/types';
+import { BackgroundConfig, CardData, CardStyle } from '@/types';
 import {
   getQuotes,
   LINE_HEIGHT_MULTIPLIER,
@@ -23,13 +23,27 @@ import {
   TITLE_TO_AUTHOR_GAP,
   HANDWRITING_FONT,
 } from '@/utils/cardSizeCalculator';
+import {
+  getBlurRadius,
+  getTexAlpha,
+  getMaskStops,
+  getGlowSources,
+  getMode
+} from './coverDecision';
+import { rgbToHsl, hslToRgb, toRgba, hexToRgb } from './colorUtils';
 
 // ============================================================================
 // 辅助函数
 // ============================================================================
 
 /**
- * 绘制背景配置
+ * 绘制背景配置（v3 模糊背景方案）
+ *
+ * 四层渲染：
+ * 1. Layer 1: 主色深色底渐变（兜底）
+ * 2. Layer 2: 封面模糊副本（纹理层）
+ * 3. Layer 3: 主色蒙版 + 四角暗角
+ * 4. Layer 4: 柔光晕（亮点位置驱动）
  */
 function drawBackground(
   ctx: CanvasRenderingContext2D,
@@ -37,216 +51,101 @@ function drawBackground(
   height: number,
   config: BackgroundConfig
 ): void {
-  // 如果有上传的图片，先绘制图片（低不透明度）
-  if (config.type === 'cover' && config.imageUrl) {
-    drawUploadedImage(ctx, width, height, config.imageUrl);
+  if (config.type !== 'cover' || !config.imageUrl) {
+    // Fallback: 使用 style 的渐变
+    return;
   }
 
-  // 绘制主色渐变
-  const gradient = ctx.createLinearGradient(0, 0, 0, height);
-  config.colors.forEach((color, i) => {
-    const offset = i / (config.colors.length - 1);
-    gradient.addColorStop(offset, color);
-  });
-
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
-
-  // 绘制边缘检测纹理（新增）
-  if (config.pattern === 'edges' && config.edges) {
-    // 使用第二个主色作为纹理颜色（通常与背景形成对比）
-    const textureColor = config.colors[1] || config.colors[0];
-    drawEdgeTexture(ctx, width, height, config.edges, textureColor);
-  }
-
-  // 根据 pattern 添加装饰元素
-  if (config.pattern === 'stars') {
-    drawStars(ctx, width, height);
-  } else if (config.pattern === 'geometric') {
-    drawGeometric(ctx, width, height, config.colors);
-  } else if (config.pattern === 'sparkle') {
-    drawSparkle(ctx, width, height, config.colors);
-  }
-
-  // 绘制遮罩层
-  const maskGradient = ctx.createLinearGradient(0, 0, 0, height);
-  maskGradient.addColorStop(0, `rgba(0, 0, 0, ${config.maskOpacity + 0.05})`);
-  maskGradient.addColorStop(0.3, `rgba(0, 0, 0, ${config.maskOpacity - 0.15})`);
-  maskGradient.addColorStop(1, `rgba(0, 0, 0, ${config.maskOpacity})`);
-
-  ctx.fillStyle = maskGradient;
-  ctx.fillRect(0, 0, width, height);
-}
-
-/**
- * 绘制上传的图片作为背景
- */
-function drawUploadedImage(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  imageUrl: string
-): void {
   const img = new Image();
   img.crossOrigin = 'anonymous';
-  img.src = imageUrl;
+  img.src = config.imageUrl;
 
-  // 计算 cover 模式的绘制参数（保持图片比例填满画布）
-  const imgRatio = img.width / img.height;
-  const canvasRatio = width / height;
-
-  let drawWidth: number, drawHeight: number, drawX: number, drawY: number;
-
-  if (imgRatio > canvasRatio) {
-    // 图片更宽，按高度缩放
-    drawHeight = height;
-    drawWidth = imgRatio * height;
-    drawX = (width - drawWidth) / 2;
-    drawY = 0;
-  } else {
-    // 图片更高，按宽度缩放
-    drawWidth = width;
-    drawHeight = width / imgRatio;
-    drawX = 0;
-    drawY = (height - drawHeight) / 2;
+  // 等待图片加载完成（同步绘制场景）
+  if (!img.complete) {
+    img.onload = () => {
+      drawBackground(ctx, width, height, config);
+    };
+    return;
   }
 
-  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-}
+  // 决策参数
+  const mode = getMode(config.avgLum, config.textureScore);
+  const blurRadius = getBlurRadius(config.textureScore);
+  const texAlpha = getTexAlpha(config.textureScore);
+  const maskStops = getMaskStops(mode);
+  const glowSources = getGlowSources(config.brightSpots);
 
-/**
- * 绘制边缘检测纹理
- *
- * @param ctx - Canvas 2D 上下文
- * @param width - 画布宽度
- * @param height - 画布高度
- * @param edges - 边缘数据
- * @param baseColor - 基础颜色（从提取的主色中选择）
- */
-function drawEdgeTexture(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  edges: EdgeData,
-  baseColor: string
-): void {
-  if (edges.paths.length === 0) return;
+  // 主色（第一个，饱和度最高）
+  const [r, g, b] = hslToRgb(rgbToHsl(hexToRgb(config.colors[0])));
+  const [H, S] = rgbToHsl([r, g, b]);
 
-  ctx.save();
-  ctx.globalAlpha = 0.2;  // 低不透明度，避免干扰文字
-  ctx.strokeStyle = baseColor;
-  ctx.lineWidth = 1;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  // Layer 1: 主色深色底渐变
+  const c0 = hslToRgb([H, Math.min(S, 85), 11]);
+  const c1 = hslToRgb([(H + 15) % 360, Math.min(S, 70), 7]);
+  const bg = ctx.createLinearGradient(0, 0, 0, height);
+  bg.addColorStop(0, toRgba(c0, 1));
+  bg.addColorStop(1, toRgba(c1, 1));
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
 
-  // 缩放因子
-  const scaleX = width / 200;
-  const scaleY = height / 280;
+  // Layer 2: 封面模糊副本
+  const ia = img.naturalWidth / img.naturalHeight;
+  let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+  if (ia > 1) {
+    sw = sh;
+    sx = (img.naturalWidth - sw) / 2;
+  } else {
+    sh = sw;
+    sy = (img.naturalHeight - sh) / 2;
+  }
 
-  edges.paths.forEach(path => {
-    if (path.points.length < 2) return;
+  const bleed = blurRadius * 2.5;
+  ctx.filter = `blur(${blurRadius}px)`;
+  ctx.globalAlpha = texAlpha;
+  ctx.drawImage(
+    img, sx, sy, sw, sh,
+    -bleed, -bleed, width + bleed * 2, height + bleed * 2
+  );
+  ctx.filter = 'none';
+  ctx.globalAlpha = 1;
 
-    ctx.beginPath();
-    const start = path.points[0];
-    ctx.moveTo(start.x * scaleX, start.y * scaleY);
+  // Layer 3: 主色蒙版 + 四角暗角
+  const maskColor = hslToRgb([H, Math.min(S * 0.4, 30), 4]);
+  const mask = ctx.createLinearGradient(0, 0, 0, height);
+  mask.addColorStop(0, toRgba(maskColor, maskStops.top));
+  mask.addColorStop(0.5, toRgba(maskColor, maskStops.middle));
+  mask.addColorStop(1, toRgba(maskColor, maskStops.bottom));
+  ctx.fillStyle = mask;
+  ctx.fillRect(0, 0, width, height);
 
-    for (let i = 1; i < path.points.length; i++) {
-      const point = path.points[i];
-      ctx.lineTo(point.x * scaleX, point.y * scaleY);
-    }
-
-    if (path.closed) ctx.closePath();
-    ctx.stroke();
+  // 四角暗角
+  [[0, 0], [width, 0], [width, height], [0, height]].forEach(([cx, cy]) => {
+    const vg = ctx.createRadialGradient(cx, cy, 0, cx, cy, width * 0.62);
+    vg.addColorStop(0, 'rgba(0,0,0,0.42)');
+    vg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, width, height);
   });
 
-  ctx.restore();
-}
+  // Layer 4: 柔光晕
+  glowSources.forEach(({ x, y, v }, i) => {
+    const glowColor = hslToRgb([H, Math.min(S + 10, 100), 30 + i * 5]);
+    const px = x * width, py = y * height;
+    const g = ctx.createRadialGradient(px, py, 0, px, py, width * 0.45);
+    g.addColorStop(0, toRgba(glowColor, v * 0.45));
+    g.addColorStop(0.5, toRgba(glowColor, v * 0.12));
+    g.addColorStop(1, toRgba(glowColor, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, width, height);
+  });
 
-/**
- * 绘制星空元素
- */
-function drawStars(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number
-): void {
-  const textArea = { x: 40, y: 60, w: 280, h: 200 };
-
-  for (let i = 0; i < 50; i++) {
-    let x: number, y: number;
-
-    // 避开文字区域
-    do {
-      x = Math.random() * width;
-      y = Math.random() * height;
-    } while (
-      x >= textArea.x && x <= textArea.x + textArea.w &&
-      y >= textArea.y && y <= textArea.y + textArea.h
-    );
-
-    const size = Math.random() * 2 + 0.5;
-    const brightness = Math.random() * 0.5 + 0.5;
-
-    // 光晕
-    const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
-    glowGradient.addColorStop(0, `rgba(255, 255, 255, ${brightness * 0.6})`);
-    glowGradient.addColorStop(1, 'transparent');
-
-    ctx.fillStyle = glowGradient;
-    ctx.beginPath();
-    ctx.arc(x, y, size * 3, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-/**
- * 绘制几何图案
- */
-function drawGeometric(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  colors: string[]
-): void {
-  ctx.save();
-  ctx.globalAlpha = 0.3;
-
-  for (let i = 0; i < 30; i++) {
-    const x = Math.random() * width;
-    const y = Math.random() * height;
-    const size = Math.random() * 40 + 15;
-
-    ctx.strokeStyle = colors[Math.floor(Math.random() * colors.length)];
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x, y, size, size);
-  }
-
-  ctx.restore();
-}
-
-/**
- * 绘制闪烁效果
- */
-function drawSparkle(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  colors: string[]
-): void {
-  for (let i = 0; i < 40; i++) {
-    const x = Math.random() * width;
-    const y = Math.random() * height;
-    const size = Math.random() * 4 + 2;
-
-    const gradient = ctx.createRadialGradient(x, y, 0, x, y, size * 2);
-    gradient.addColorStop(0, colors[colors.length - 1] + '80');
-    gradient.addColorStop(1, 'transparent');
-
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(x, y, size * 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  // 补色冷光
+  const coldColor = hslToRgb([(H + 180) % 360, Math.min(S * 0.5, 40), 18]);
+  const cg = ctx.createRadialGradient(width * 0.1, height * 0.9, 0, width * 0.1, height * 0.9, width * 0.5);
+  cg.addColorStop(0, toRgba(coldColor, 0.20));
+  cg.addColorStop(1, toRgba(coldColor, 0));
+  ctx.fillStyle = cg;
+  ctx.fillRect(0, 0, width, height);
 }
 
 /**
