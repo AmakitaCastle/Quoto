@@ -128,12 +128,11 @@ export function getDefaultGradient(): BackgroundConfig {
 }
 
 /**
- * 从上传的图片加载背景配置
+ * 从上传的图片加载背景配置（旧版本，不使用边缘检测）
  *
- * @param imageDataUrl - 上传图片的 Data URL
- * @returns BackgroundConfig
+ * @deprecated 使用新的 loadBackgroundFromUpload（带边缘检测）替代
  */
-export async function loadBackgroundFromUpload(imageDataUrl: string): Promise<BackgroundConfig> {
+export async function loadBackgroundFromUploadLegacy(imageDataUrl: string): Promise<BackgroundConfig> {
   try {
     const colors = await extractColors(imageDataUrl);
     const pattern = detectPattern(colors, '');
@@ -389,4 +388,92 @@ export function classifyEdgeType(paths: PathData[]): 'lines' | 'curves' | 'dots'
   if (avgCurvature > 0.8) return 'lines';    // 高曲率 → 直线
   if (avgCurvature > 0.5) return 'curves';   // 中等曲率 → 曲线
   return 'noise';                            // 其他 → 噪点
+}
+
+/**
+ * 计算边缘强度平均值
+ *
+ * @param edges - 边缘强度图
+ * @returns 边缘强度 (0-1)
+ */
+function computeIntensity(edges: Float32Array): number {
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < edges.length; i++) {
+    if (edges[i] > 0.1) {  // 忽略弱边缘
+      sum += edges[i];
+      count++;
+    }
+  }
+  return count > 0 ? sum / count / edges.length : 0;
+}
+
+/**
+ * 从图片提取边缘数据
+ *
+ * @param imageSource - HTMLImageElement 或 Data URL
+ * @returns EdgeData
+ */
+export async function extractEdges(
+  imageSource: HTMLImageElement | string
+): Promise<import('@/types').EdgeData> {
+  try {
+    const img = typeof imageSource === 'string'
+      ? await loadImage(imageSource)
+      : imageSource;
+
+    // 缩小到 200x280 进行边缘检测
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 280;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      throw new Error('Failed to get canvas context');
+    }
+
+    ctx.drawImage(img, 0, 0, 200, 280);
+    const imageData = ctx.getImageData(0, 0, 200, 280);
+
+    // 边缘检测
+    const edges = computeSobel(imageData);
+    const threshold = computeAdaptiveThreshold(edges);
+    const paths = extractPaths(edges, threshold, 200, 280);
+
+    // 分类和计算强度
+    const type = classifyEdgeType(paths);
+    const intensity = computeIntensity(edges);
+
+    return { type, intensity, paths };
+  } catch (err) {
+    console.warn('Edge detection failed:', err);
+    return { type: 'noise', intensity: 0, paths: [] };
+  }
+}
+
+/**
+ * 从上传的图片加载背景配置
+ *
+ * @param imageDataUrl - 上传图片的 Data URL
+ * @returns BackgroundConfig
+ */
+export async function loadBackgroundFromUpload(imageDataUrl: string): Promise<BackgroundConfig> {
+  try {
+    const colors = await extractColors(imageDataUrl);
+    const img = await loadImage(imageDataUrl);
+    const edges = await extractEdges(img);
+    const pattern = detectPattern(colors, '');
+
+    return {
+      type: 'cover',
+      colors,
+      pattern: edges.paths.length > 0 ? 'edges' : pattern,
+      imageUrl: imageDataUrl,
+      edges,
+      maskOpacity: 0.7,
+    };
+  } catch (err) {
+    console.warn('Failed to process uploaded image:', err);
+    return getDefaultGradient();
+  }
 }
