@@ -8,11 +8,13 @@
  * @package src/components
  */
 
-import { useEffect, useRef } from 'react';
-import { CardData } from '@/types';
+import { useState, useEffect, useRef } from 'react';
+import { CardData, BackgroundConfig } from '@/types';
 import { STYLES } from './StylePicker.data';
 import { renderCardToCanvas } from '@/utils/cardRenderer';
 import { getCanvasDimensionsV2 } from '@/utils/cardSizeCalculator';
+import { backgroundCache } from '@/utils/backgroundCache';
+import { loadBackgroundConfig } from '@/utils/coverExtractor';
 
 /** 卡片画布组件的属性 */
 interface CardCanvasProps {
@@ -40,6 +42,32 @@ export function CardCanvas({ data }: CardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const style = STYLES.find(s => s.id === data.styleId) || STYLES[0];
 
+  const [backgroundConfig, setBackgroundConfig] = useState<BackgroundConfig | null>(null);
+  const [backgroundLoading, setBackgroundLoading] = useState(false);
+
+  // 加载背景配置
+  useEffect(() => {
+    const loadBackground = async () => {
+      setBackgroundLoading(true);
+
+      // 检查缓存
+      const cached = backgroundCache.get(data.bookTitle);
+      if (cached) {
+        setBackgroundConfig(cached);
+        setBackgroundLoading(false);
+        return;
+      }
+
+      // 加载新配置
+      const config = await loadBackgroundConfig(data.bookTitle);
+      backgroundCache.set(data.bookTitle, config);
+      setBackgroundConfig(config);
+      setBackgroundLoading(false);
+    };
+
+    loadBackground();
+  }, [data.bookTitle]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -53,14 +81,21 @@ export function CardCanvas({ data }: CardCanvasProps) {
     canvas.height = dimensions.height;
 
     // 在 Canvas 上绘制完整卡片
-    renderCardToCanvas(canvas, data, style, dimensions.quoteStartY, dimensions.openQuoteY);
-  }, [data, style]);
+    renderCardToCanvas(canvas, data, style, dimensions.quoteStartY, dimensions.openQuoteY, backgroundConfig ?? undefined);
+  }, [data, style, backgroundConfig]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="max-w-full h-auto"
-      style={{ maxWidth: '400px', height: 'auto' }}
-    />
+    <div className="relative">
+      <canvas
+        ref={canvasRef}
+        className="max-w-full h-auto"
+        style={{ maxWidth: '400px', height: 'auto' }}
+      />
+      {backgroundLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-md">
+          <div className="w-6 h-6 border-2 border-[#d4a044] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+    </div>
   );
 }
