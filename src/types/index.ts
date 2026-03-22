@@ -45,9 +45,6 @@ export interface CardData {
 
   /** 书名/作者字体（可选） */
   handwritingFont?: string;
-
-  /** 用户上传的背景图片（可选） */
-  uploadedBackground?: string;
 }
 
 /**
@@ -155,55 +152,3 @@ export interface FontConfig {
   /** 预览文本 */
   preview: string;
 }
-
-/**
- * 背景配置接口（v3 模糊背景方案）
- *
- * 用于书籍封面背景系统的配置
- */
-export interface BackgroundConfig {
-  /** 背景类型 */
-  type: 'cover' | 'gradient';
-  /** 主色数组（K-Means 5 个主色，按饱和度降序） */
-  colors: string[];
-  /** 纹理复杂度 (0-1) */
-  textureScore: number;
-  /** 亮点位置数组 */
-  brightSpots: BrightSpot[];
-  /** 平均亮度 (0-1) */
-  avgLum: number;
-  /** 上传的图片 URL（仅 cover 类型） */
-  imageUrl?: string;
-}
-
-/**
- * 亮点数据
- *
- * 用于存储封面高亮区域的位置和亮度
- */
-export interface BrightSpot {
-  /** 归一化 X 坐标 (0-1) */
-  x: number;
-  /** 归一化 Y 坐标 (0-1) */
-  y: number;
-  /** 亮度值 (0-1) */
-  v: number;
-}
-
-/**
- * 蒙版三段停止点
- *
- * 用于控制渐变蒙版的上/中/下不透明度
- */
-export interface MaskStops {
-  top: number;
-  middle: number;
-  bottom: number;
-}
-
-/**
- * 封面适配模式
- *
- * 用于根据封面特征调整渲染参数
- */
-export type CoverMode = 'normal' | 'too-bright' | 'too-plain';

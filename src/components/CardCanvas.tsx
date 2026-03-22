@@ -8,12 +8,11 @@
  * @package src/components
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { CardData, BackgroundConfig } from '@/types';
+import { useEffect, useRef } from 'react';
+import { CardData } from '@/types';
 import { STYLES } from './StylePicker.data';
 import { renderCardToCanvas } from '@/utils/cardRenderer';
 import { getCanvasDimensionsV2 } from '@/utils/cardSizeCalculator';
-import { loadBackgroundFromUpload } from '@/utils/coverExtractor';
 
 /** 卡片画布组件的属性 */
 interface CardCanvasProps {
@@ -41,43 +40,6 @@ export function CardCanvas({ data }: CardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const style = STYLES.find(s => s.id === data.styleId) || STYLES[0];
 
-  const [backgroundConfig, setBackgroundConfig] = useState<BackgroundConfig | null>(null);
-  const [backgroundLoading, setBackgroundLoading] = useState(false);
-  const [loadedImage, setLoadedImage] = useState<HTMLImageElement | null>(null);
-
-  // 加载上传的背景图片配置
-  useEffect(() => {
-    const loadUploadedImage = async () => {
-      if (!data.uploadedBackground) {
-        setBackgroundConfig(null);
-        setLoadedImage(null);
-        return;
-      }
-
-      setBackgroundLoading(true);
-      try {
-        const config = await loadBackgroundFromUpload(data.uploadedBackground);
-        setBackgroundConfig(config);
-
-        // 预加载图片，确保渲染时图片已就绪
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = data.uploadedBackground;
-        if (img.complete) {
-          setLoadedImage(img);
-        } else {
-          img.onload = () => setLoadedImage(img);
-        }
-      } catch (err) {
-        console.warn('Failed to load background:', err);
-      } finally {
-        setBackgroundLoading(false);
-      }
-    };
-
-    loadUploadedImage();
-  }, [data.uploadedBackground]);
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -90,9 +52,9 @@ export function CardCanvas({ data }: CardCanvasProps) {
     canvas.width = dimensions.width;
     canvas.height = dimensions.height;
 
-    // 在 Canvas 上绘制完整卡片（传入已加载的图片）
-    renderCardToCanvas(canvas, data, style, dimensions.quoteStartY, dimensions.openQuoteY, backgroundConfig ?? undefined, loadedImage ?? undefined);
-  }, [data, style, backgroundConfig, loadedImage]);
+    // 在 Canvas 上绘制完整卡片
+    renderCardToCanvas(canvas, data, style, dimensions.quoteStartY, dimensions.openQuoteY);
+  }, [data, style]);
 
   return (
     <div className="relative">
@@ -101,11 +63,6 @@ export function CardCanvas({ data }: CardCanvasProps) {
         className="max-w-full h-auto"
         style={{ maxWidth: '400px', height: 'auto' }}
       />
-      {backgroundLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-md">
-          <div className="w-6 h-6 border-2 border-[#d4a044] border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 /**
- * 卡片渲染器（v3 模糊背景方案）
+ * 卡片渲染器
  *
  * 核心渲染逻辑：在 HTML5 Canvas 上绘制书摘卡片。
  * 负责绘制背景、引号、正文、分隔线、书名和作者等所有视觉元素。
@@ -7,7 +7,7 @@
  * @package src/utils
  */
 
-import { BackgroundConfig, CardData, CardStyle } from '@/types';
+import { CardData, CardStyle } from '@/types';
 import {
   getQuotes,
   LINE_HEIGHT_MULTIPLIER,
@@ -23,128 +23,10 @@ import {
   TITLE_TO_AUTHOR_GAP,
   HANDWRITING_FONT,
 } from '@/utils/cardSizeCalculator';
-import {
-  getBlurRadius,
-  getTexAlpha,
-  getMaskStops,
-  getGlowSources,
-  getMode
-} from './coverDecision';
-import { rgbToHsl, hslToRgb, toRgba, hexToRgb } from './colorUtils';
 
 // ============================================================================
 // 辅助函数
 // ============================================================================
-
-/**
- * 绘制背景配置（v3 模糊背景方案）
- *
- * 四层渲染：
- * 1. Layer 1: 主色深色底渐变（兜底）
- * 2. Layer 2: 封面模糊副本（纹理层）
- * 3. Layer 3: 主色蒙版 + 四角暗角
- * 4. Layer 4: 柔光晕（亮点位置驱动）
- */
-function drawBackground(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  config: BackgroundConfig | null | undefined,
-  style: CardStyle,
-  loadedImage?: HTMLImageElement
-): void {
-  // 如果没有 cover 配置或没有已加载的图片，使用 style 的渐变背景
-  if (!config || config.type !== 'cover' || !loadedImage) {
-    const gradient = parseGradient(style.background, ctx, height);
-    ctx.fillStyle = gradient ?? style.background;
-    ctx.fillRect(0, 0, width, height);
-    return;
-  }
-
-  // 使用已加载的图片（在 CardCanvas 中预加载）
-  const img = loadedImage;
-
-  // 决策参数
-  const mode = getMode(config.avgLum, config.textureScore);
-  const blurRadius = getBlurRadius(config.textureScore);
-  const texAlpha = getTexAlpha(config.textureScore);
-  const maskStops = getMaskStops(mode);
-  const glowSources = getGlowSources(config.brightSpots);
-
-  // 主色（第一个，饱和度最高）
-  const [r, g, b] = hslToRgb(rgbToHsl(hexToRgb(config.colors[0])));
-  const [H, S] = rgbToHsl([r, g, b]);
-
-  // Layer 1: 主色深色底渐变（方案 A：提高亮度让图片更明显）
-  // 原：11%, 7% → 新：18%, 12%
-  const c0 = hslToRgb([H, Math.min(S, 85), 18]);
-  const c1 = hslToRgb([(H + 15) % 360, Math.min(S, 70), 12]);
-  const bg = ctx.createLinearGradient(0, 0, 0, height);
-  bg.addColorStop(0, toRgba(c0, 1));
-  bg.addColorStop(1, toRgba(c1, 1));
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, width, height);
-
-  // Layer 2: 封面模糊副本
-  const ia = img.naturalWidth / img.naturalHeight;
-  let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
-  if (ia > 1) {
-    sw = sh;
-    sx = (img.naturalWidth - sw) / 2;
-  } else {
-    sh = sw;
-    sy = (img.naturalHeight - sh) / 2;
-  }
-
-  const bleed = blurRadius * 2.5;
-  ctx.filter = `blur(${blurRadius}px)`;
-  ctx.globalAlpha = texAlpha;
-  ctx.drawImage(
-    img, sx, sy, sw, sh,
-    -bleed, -bleed, width + bleed * 2, height + bleed * 2
-  );
-  ctx.filter = 'none';
-  ctx.globalAlpha = 1;
-
-  // Layer 3: 主色蒙版 + 四角暗角
-  const maskColor = hslToRgb([H, Math.min(S * 0.4, 30), 4]);
-  const mask = ctx.createLinearGradient(0, 0, 0, height);
-  mask.addColorStop(0, toRgba(maskColor, maskStops.top));
-  mask.addColorStop(0.5, toRgba(maskColor, maskStops.middle));
-  mask.addColorStop(1, toRgba(maskColor, maskStops.bottom));
-  ctx.fillStyle = mask;
-  ctx.fillRect(0, 0, width, height);
-
-  // 四角暗角（方案 A：减轻暗角重量）
-  // 原：0.42 → 新：0.25
-  [[0, 0], [width, 0], [width, height], [0, height]].forEach(([cx, cy]) => {
-    const vg = ctx.createRadialGradient(cx, cy, 0, cx, cy, width * 0.62);
-    vg.addColorStop(0, 'rgba(0,0,0,0.25)');
-    vg.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = vg;
-    ctx.fillRect(0, 0, width, height);
-  });
-
-  // Layer 4: 柔光晕
-  glowSources.forEach(({ x, y, v }, i) => {
-    const glowColor = hslToRgb([H, Math.min(S + 10, 100), 30 + i * 5]);
-    const px = x * width, py = y * height;
-    const g = ctx.createRadialGradient(px, py, 0, px, py, width * 0.45);
-    g.addColorStop(0, toRgba(glowColor, v * 0.45));
-    g.addColorStop(0.5, toRgba(glowColor, v * 0.12));
-    g.addColorStop(1, toRgba(glowColor, 0));
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, width, height);
-  });
-
-  // 补色冷光
-  const coldColor = hslToRgb([(H + 180) % 360, Math.min(S * 0.5, 40), 18]);
-  const cg = ctx.createRadialGradient(width * 0.1, height * 0.9, 0, width * 0.1, height * 0.9, width * 0.5);
-  cg.addColorStop(0, toRgba(coldColor, 0.20));
-  cg.addColorStop(1, toRgba(coldColor, 0));
-  ctx.fillStyle = cg;
-  ctx.fillRect(0, 0, width, height);
-}
 
 /**
  * 用 actualBoundingBoxRight 让文字墨迹右边缘精确对齐到 rightEdge，
@@ -229,6 +111,20 @@ function parseGradient(
   return gradient;
 }
 
+/**
+ * 绘制背景
+ */
+function drawBackground(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  style: CardStyle
+): void {
+  const gradient = parseGradient(style.background, ctx, height);
+  ctx.fillStyle = gradient ?? style.background;
+  ctx.fillRect(0, 0, width, height);
+}
+
 // ============================================================================
 // 核心渲染函数
 // ============================================================================
@@ -249,8 +145,6 @@ function parseGradient(
  * @param style - 风格配置（颜色、背景等）
  * @param quoteStartY - 正文起始 Y 坐标
  * @param openQuoteY - 开引号起始 Y 坐标
- * @param backgroundConfig - 背景配置（可选）
- * @param loadedImage - 已加载的图片（可选，用于 cover 模式）
  */
 export function renderCardToCanvas(
   canvas: HTMLCanvasElement,
@@ -258,8 +152,6 @@ export function renderCardToCanvas(
   style: CardStyle,
   quoteStartY: number,
   openQuoteY: number,
-  backgroundConfig?: BackgroundConfig,
-  loadedImage?: HTMLImageElement,
 ): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -286,8 +178,8 @@ export function renderCardToCanvas(
   ctx.closePath();
   ctx.clip();
 
-  // 使用背景配置或默认渐变
-  drawBackground(ctx, width, height, backgroundConfig, style, loadedImage);
+  // 绘制背景
+  drawBackground(ctx, width, height, style);
 
   ctx.restore();
 
