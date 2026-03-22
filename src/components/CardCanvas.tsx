@@ -14,7 +14,7 @@ import { STYLES } from './StylePicker.data';
 import { renderCardToCanvas } from '@/utils/cardRenderer';
 import { getCanvasDimensionsV2 } from '@/utils/cardSizeCalculator';
 import { backgroundCache } from '@/utils/backgroundCache';
-import { loadBackgroundConfig } from '@/utils/coverExtractor';
+import { loadBackgroundFromUpload, getDefaultGradient } from '@/utils/coverExtractor';
 
 /** 卡片画布组件的属性 */
 interface CardCanvasProps {
@@ -45,28 +45,34 @@ export function CardCanvas({ data }: CardCanvasProps) {
   const [backgroundConfig, setBackgroundConfig] = useState<BackgroundConfig | null>(null);
   const [backgroundLoading, setBackgroundLoading] = useState(false);
 
-  // 加载背景配置
+  // 加载背景配置（优先使用上传的图片）
   useEffect(() => {
     const loadBackground = async () => {
-      setBackgroundLoading(true);
+      // 如果有上传的背景图片，直接使用
+      if (data.uploadedBackground) {
+        setBackgroundLoading(true);
+        const config = await loadBackgroundFromUpload(data.uploadedBackground);
+        backgroundCache.set(data.bookTitle, config);
+        setBackgroundConfig(config);
+        setBackgroundLoading(false);
+        return;
+      }
 
       // 检查缓存
       const cached = backgroundCache.get(data.bookTitle);
       if (cached) {
         setBackgroundConfig(cached);
-        setBackgroundLoading(false);
         return;
       }
 
-      // 加载新配置
-      const config = await loadBackgroundConfig(data.bookTitle);
+      // 没有上传图片时使用默认渐变
+      const config = getDefaultGradient();
       backgroundCache.set(data.bookTitle, config);
       setBackgroundConfig(config);
-      setBackgroundLoading(false);
     };
 
     loadBackground();
-  }, [data.bookTitle]);
+  }, [data.bookTitle, data.uploadedBackground]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

@@ -50,8 +50,96 @@ export function InputPanel({ data, onDataChange, onSave, onStyleChange, onFontCh
     onDataChange(randomQuote);
   };
 
+  /** 处理图片上传 */
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          onDataChange({ uploadedBackground: event.target.result as string });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  /** 处理拖放上传 */
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          onDataChange({ uploadedBackground: event.target.result as string });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  /** 处理拖放阻止默认行为 */
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  /** 移除背景图片 */
+  const handleRemoveBackground = () => {
+    onDataChange({ uploadedBackground: undefined });
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#141414] border-r border-[#2a2a2a] p-4 overflow-y-auto">
+      {/* 背景图片上传 */}
+      <div className="mb-4 flex-shrink-0">
+        <label className="text-xs text-gray-500 mb-2 block">背景图片</label>
+        <div
+          className={`border-2 border-dashed rounded-md p-4 text-center transition-colors ${
+            data.uploadedBackground
+              ? 'border-gold bg-[#1a1a1a]'
+              : 'border-[#2a2a2a] hover:border-gold-hover'
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+        >
+          {data.uploadedBackground ? (
+            <div className="relative">
+              <img
+                src={data.uploadedBackground}
+                alt="Background preview"
+                className="max-h-32 mx-auto rounded-md object-cover"
+              />
+              <button
+                onClick={handleRemoveBackground}
+                className="absolute top-1 right-1 bg-black/70 hover:bg-black text-white rounded-full p-1 text-xs"
+                title="移除背景"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <p className="text-xs text-gray-500 mt-2">点击"保存卡片"时使用此背景</p>
+            </div>
+          ) : (
+            <div>
+              <svg className="mx-auto h-8 w-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p className="text-xs text-gray-400 mt-2">拖拽图片到此处或点击选择</p>
+              <label className="mt-2 inline-block px-3 py-1 bg-[#2a2a2a] hover:bg-[#3a3a3a] rounded-md text-xs text-gold cursor-pointer">
+                选择图片
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+      </div>
       {/* 句子输入 */}
       <div className="mb-4 flex-shrink-0">
         <div className="flex justify-between items-center mb-2">

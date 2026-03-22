@@ -37,6 +37,11 @@ function drawBackground(
   height: number,
   config: BackgroundConfig
 ): void {
+  // 如果有上传的图片，先绘制图片
+  if (config.type === 'cover' && config.imageUrl) {
+    drawUploadedImage(ctx, width, height, config.imageUrl);
+  }
+
   // 绘制主色渐变
   const gradient = ctx.createLinearGradient(0, 0, 0, height);
   config.colors.forEach((color, i) => {
@@ -64,6 +69,42 @@ function drawBackground(
 
   ctx.fillStyle = maskGradient;
   ctx.fillRect(0, 0, width, height);
+}
+
+/**
+ * 绘制上传的图片作为背景
+ */
+function drawUploadedImage(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  imageUrl: string
+): void {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = imageUrl;
+
+  // 计算 cover 模式的绘制参数（保持图片比例填满画布）
+  const imgRatio = img.width / img.height;
+  const canvasRatio = width / height;
+
+  let drawWidth: number, drawHeight: number, drawX: number, drawY: number;
+
+  if (imgRatio > canvasRatio) {
+    // 图片更宽，按高度缩放
+    drawHeight = height;
+    drawWidth = imgRatio * height;
+    drawX = (width - drawWidth) / 2;
+    drawY = 0;
+  } else {
+    // 图片更高，按宽度缩放
+    drawWidth = width;
+    drawHeight = width / imgRatio;
+    drawX = 0;
+    drawY = (height - drawHeight) / 2;
+  }
+
+  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 }
 
 /**
@@ -151,50 +192,6 @@ function drawSparkle(
     ctx.arc(x, y, size * 2, 0, Math.PI * 2);
     ctx.fill();
   }
-}
-
-/**
- * 绘制中式纹理
- */
-function drawTexture(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  colors: string[],
-  _textureName?: string
-): void {
-  // 底色渐变
-  const gradient = ctx.createLinearGradient(0, 0, 0, height);
-  colors.forEach((color, i) => {
-    gradient.addColorStop(i / (colors.length - 1), color);
-  });
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
-
-  // 噪点纹理
-  for (let i = 0; i < 5000; i++) {
-    const x = Math.random() * width;
-    const y = Math.random() * height;
-    const alpha = 0.02 + Math.random() * 0.03;
-    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-    ctx.fillRect(x, y, 2, 1);
-  }
-
-  // 四角云纹装饰
-  ctx.strokeStyle = 'rgba(160, 140, 100, 0.3)';
-  ctx.lineWidth = 1;
-  const cloudPatterns = [
-    { x: 30, y: 30, r: 20 },
-    { x: width - 30, y: 30, r: 15 },
-    { x: 30, y: height - 30, r: 15 },
-    { x: width - 30, y: height - 30, r: 20 },
-  ];
-
-  cloudPatterns.forEach(pattern => {
-    ctx.beginPath();
-    ctx.arc(pattern.x, pattern.y, pattern.r, 0, Math.PI * 2);
-    ctx.stroke();
-  });
 }
 
 /**
@@ -336,11 +333,7 @@ export function renderCardToCanvas(
 
   // 使用背景配置或默认渐变
   if (backgroundConfig) {
-    if (backgroundConfig.type === 'texture') {
-      drawTexture(ctx, width, height, backgroundConfig.colors, backgroundConfig.textureName);
-    } else {
-      drawBackground(ctx, width, height, backgroundConfig);
-    }
+    drawBackground(ctx, width, height, backgroundConfig);
   } else {
     const gradient = parseGradient(style.background, ctx, height);
     ctx.fillStyle = gradient ?? style.background;

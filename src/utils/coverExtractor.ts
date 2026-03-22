@@ -1,67 +1,11 @@
 /**
  * 书籍封面提取工具
  *
- * 从豆瓣 API 获取封面，提取主色和视觉元素，生成背景配置
- * 支持三级降级：封面 API → 内置纹理 → 默认渐变
+ * 从用户上传的图片提取主色和视觉元素，生成背景配置
+ * 支持两级降级：上传图片 → 默认渐变
  */
 
 import { BackgroundConfig, PatternType } from '@/types';
-
-// 豆瓣搜索 API
-const DOUBAN_SEARCH_API = 'https://api.douban.com/v2/book/search';
-
-/**
- * 10 种内置中式纹理
- */
-export const TEXTURES = [
-  { name: 'xuan-paper', label: '宣纸纹', colors: ['#f5f0e6', '#e8e0d0', '#d0c8b8'] },
-  { name: 'juan-fabric', label: '绢布纹', colors: ['#e8d8c0', '#d8c8a8', '#c8b898'] },
-  { name: 'mu-wood', label: '木纹', colors: ['#8B6F47', '#6B5437', '#4B3F27'] },
-  { name: 'shi-stone', label: '石纹', colors: ['#6a6a6a', '#5a5a5a', '#4a4a4a'] },
-  { name: 'zhu-bamboo', label: '竹纹', colors: ['#c8d8c0', '#b8c8b0', '#a8b8a0'] },
-  { name: 'yun-cloud', label: '云纹', colors: ['#e0e8f0', '#d0d8e0', '#c0c8d0'] },
-  { name: 'shui-water', label: '水纹', colors: ['#a0c8d8', '#90b8c8', '#80a8b8'] },
-  { name: 'shan-mountain', label: '山纹', colors: ['#5a6a5a', '#4a5a4a', '#3a4a3a'] },
-  { name: 'hua-niao', label: '花鸟纹', colors: ['#f0d8e8', '#e0c8d8', '#d0b8c8'] },
-  { name: 'ji-geometric', label: '几何纹', colors: ['#d8c8e8', '#c8b8d8', '#b8a8c8'] },
-] as const;
-
-/**
- * 根据书名计算纹理索引（确定性哈希）
- */
-export function getTextureIndex(bookTitle: string): number {
-  let hash = 0;
-  for (let i = 0; i < bookTitle.length; i++) {
-    hash = ((hash << 5) - hash) + bookTitle.charCodeAt(i);
-    hash = hash & hash;
-  }
-  return Math.abs(hash) % TEXTURES.length;
-}
-
-/**
- * 从豆瓣 API 获取书籍封面 URL
- */
-export async function fetchBookCover(bookTitle: string): Promise<string | null> {
-  try {
-    const url = `${DOUBAN_SEARCH_API}?q=${encodeURIComponent(bookTitle)}&start=0&count=1`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.books || data.books.length === 0) {
-      return null;
-    }
-
-    return data.books[0].image;
-  } catch (err) {
-    console.warn('Failed to fetch book cover:', err);
-    return null;
-  }
-}
 
 /**
  * RGB 转 Hex
@@ -75,15 +19,8 @@ function rgbToHex(r: number, g: number, b: number): string {
  *
  * 将图片缩小到 100x140，分 5 个区域采样平均色
  */
-export async function extractColors(imageUrl: string): Promise<string[]> {
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.src = imageUrl;
-
-  await new Promise((resolve, reject) => {
-    img.onload = resolve;
-    img.onerror = reject;
-  });
+export async function extractColors(imageSource: HTMLImageElement | string): Promise<string[]> {
+  const img = typeof imageSource === 'string' ? await loadImage(imageSource) : imageSource;
 
   const canvas = document.createElement('canvas');
   canvas.width = 100;
@@ -130,9 +67,22 @@ export async function extractColors(imageUrl: string): Promise<string[]> {
 }
 
 /**
+ * 加载图片为 HTMLImageElement
+ */
+function loadImage(imageUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = imageUrl;
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Failed to load image'));
+  });
+}
+
+/**
  * 检测封面视觉元素类型
  *
- * 简化版：根据颜色特征判断
+ * 根据颜色特征判断
  */
 export function detectPattern(colors: string[], bookTitle: string): PatternType {
   // 根据书名关键词判断（简化方案）
@@ -178,52 +128,33 @@ export function getDefaultGradient(): BackgroundConfig {
 }
 
 /**
- * 加载内置纹理配置
+ * 从上传的图片加载背景配置
+ *
+ * @param imageDataUrl - 上传图片的 Data URL
+ * @returns BackgroundConfig
  */
-export function getTextureConfig(textureIndex: number): BackgroundConfig {
-  const texture = TEXTURES[textureIndex];
-  return {
-    type: 'texture',
-    colors: [...texture.colors] as string[],
-    pattern: 'texture',
-    textureName: texture.name,
-    maskOpacity: 0.65,
-  };
+export async function loadBackgroundFromUpload(imageDataUrl: string): Promise<BackgroundConfig> {
+  try {
+    const colors = await extractColors(imageDataUrl);
+    const pattern = detectPattern(colors, '');
+
+    return {
+      type: 'cover',
+      colors,
+      pattern,
+      imageUrl: imageDataUrl,
+      maskOpacity: 0.7,
+    };
+  } catch (err) {
+    console.warn('Failed to process uploaded image:', err);
+    return getDefaultGradient();
+  }
 }
 
 /**
- * 加载背景配置（三级降级入口）
+ * 加载背景配置（已废弃，保留以兼容旧代码）
+ * @deprecated 使用 loadBackgroundFromUpload 替代
  */
-export async function loadBackgroundConfig(
-  bookTitle: string
-): Promise<BackgroundConfig> {
-  // 尝试 Tier 1: 封面 API
-  try {
-    const coverUrl = await fetchBookCover(bookTitle);
-
-    if (coverUrl) {
-      const colors = await extractColors(coverUrl);
-      const pattern = detectPattern(colors, bookTitle);
-
-      return {
-        type: 'cover',
-        colors,
-        pattern,
-        maskOpacity: 0.7,
-      };
-    }
-  } catch (err) {
-    console.warn('Tier 1 (cover API) failed:', err);
-  }
-
-  // 降级到 Tier 2: 内置纹理
-  try {
-    const textureIndex = getTextureIndex(bookTitle);
-    return getTextureConfig(textureIndex);
-  } catch (err) {
-    console.warn('Tier 2 (texture) failed:', err);
-  }
-
-  // 降级到 Tier 3: 默认渐变
+export async function loadBackgroundConfig(): Promise<BackgroundConfig> {
   return getDefaultGradient();
 }

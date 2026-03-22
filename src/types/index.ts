@@ -45,6 +45,9 @@ export interface CardData {
 
   /** 书名/作者字体（可选） */
   handwritingFont?: string;
+
+  /** 用户上传的背景图片（可选） */
+  uploadedBackground?: string;
 }
 
 /**
@@ -156,17 +159,17 @@ export interface FontConfig {
 /**
  * 背景配置接口
  *
- * 用于书籍封面背景系统的三级降级配置
+ * 用于书籍封面背景系统的配置
  */
 export interface BackgroundConfig {
   /** 背景类型 */
-  type: 'cover' | 'texture' | 'gradient';
+  type: 'cover' | 'gradient';
   /** 主色数组（3-5 个颜色） */
   colors: string[];
   /** 视觉元素类型 */
   pattern: PatternType;
-  /** 纹理名称（仅 Tier 2） */
-  textureName?: string;
+  /** 上传的图片 URL（仅 cover 类型） */
+  imageUrl?: string;
   /** 遮罩不透明度 (0.6-0.7) */
   maskOpacity: number;
 }
