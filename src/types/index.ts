@@ -152,3 +152,33 @@ export interface FontConfig {
   /** 预览文本 */
   preview: string;
 }
+
+/**
+ * 背景配置接口
+ *
+ * 用于书籍封面背景系统的三级降级配置
+ */
+export interface BackgroundConfig {
+  /** 背景类型 */
+  type: 'cover' | 'texture' | 'gradient';
+  /** 主色数组（3-5 个颜色） */
+  colors: string[];
+  /** 视觉元素类型 */
+  pattern: PatternType;
+  /** 纹理名称（仅 Tier 2） */
+  textureName?: string;
+  /** 遮罩不透明度 (0.6-0.7) */
+  maskOpacity: number;
+}
+
+/**
+ * 视觉元素类型
+ *
+ * 用于识别封面特征并生成对应的背景效果
+ */
+export type PatternType =
+  | 'stars'      // 星空元素（如小王子）
+  | 'texture'    // 纸质纹理（如红楼梦）
+  | 'geometric'  // 几何图案（如 1984）
+  | 'sparkle'    // 闪烁效果（如绿野仙踪）
+  | 'minimal';  // 极简风格（如白夜行）
