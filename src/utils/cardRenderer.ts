@@ -49,10 +49,14 @@ function drawBackground(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  config: BackgroundConfig
+  config: BackgroundConfig | null | undefined,
+  style: CardStyle
 ): void {
-  if (config.type !== 'cover' || !config.imageUrl) {
-    // Fallback: 使用 style 的渐变
+  // 如果没有 cover 配置，使用 style 的渐变背景
+  if (!config || config.type !== 'cover' || !config.imageUrl) {
+    const gradient = parseGradient(style.background, ctx, height);
+    ctx.fillStyle = gradient ?? style.background;
+    ctx.fillRect(0, 0, width, height);
     return;
   }
 
@@ -63,7 +67,7 @@ function drawBackground(
   // 等待图片加载完成（同步绘制场景）
   if (!img.complete) {
     img.onload = () => {
-      drawBackground(ctx, width, height, config);
+      drawBackground(ctx, width, height, config, style);
     };
     return;
   }
@@ -286,13 +290,7 @@ export function renderCardToCanvas(
   ctx.clip();
 
   // 使用背景配置或默认渐变
-  if (backgroundConfig) {
-    drawBackground(ctx, width, height, backgroundConfig);
-  } else {
-    const gradient = parseGradient(style.background, ctx, height);
-    ctx.fillStyle = gradient ?? style.background;
-    ctx.fillRect(0, 0, width, height);
-  }
+  drawBackground(ctx, width, height, backgroundConfig, style);
 
   ctx.restore();
 
