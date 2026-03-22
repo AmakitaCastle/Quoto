@@ -196,7 +196,9 @@ export function getDefaultGradient(): BackgroundConfig {
 export async function loadBackgroundFromUpload(imageDataUrl: string): Promise<BackgroundConfig> {
   try {
     const img = await loadImage(imageDataUrl);
-    return analyzeCover(img);
+    const config = analyzeCover(img);
+    // 保存图片 URL 用于后续渲染
+    return { ...config, imageUrl: imageDataUrl };
   } catch (err) {
     console.warn('Failed to analyze cover:', err);
     return getDefaultGradient();
